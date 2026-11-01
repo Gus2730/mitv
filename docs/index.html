@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0f17">
+<title>MiTV · Tu TV a tu manera</title>
+<meta name="description" content="Canales gratuitos de Costa Rica y Latinoamérica, radio, podcasts, deportes y tus películas en una sola app.">
+<link rel="icon" href="app/icons/icon-192.png">
+<link rel="manifest" href="app/manifest.webmanifest">
+<style>
+:root{--bg:#0b0f17;--panel:#121826;--panel2:#182033;--line:#243049;--text:#e8edf6;--muted:#8d99b0;--accent:#2fd18b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:24px;text-decoration:none;color:var(--text)}
+.logo span{color:var(--accent)}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:50px 0 60px}
+h1{font-size:clamp(34px,5vw,54px);line-height:1.08;margin:0 0 16px;letter-spacing:-1px}
+h1 em{font-style:normal;color:var(--accent)}
+.lead{font-size:19px;color:var(--muted);margin:0 0 28px}
+.btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#04120b;font-weight:700;padding:13px 20px;border-radius:12px;text-decoration:none;border:0;font-size:16px;cursor:pointer}
+.btn.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.ver{margin-top:14px;color:var(--muted);font-size:14px}
+.screen{background:linear-gradient(160deg,#16203a,#0c1222);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:0 30px 80px #0008}
+.screen .bar{display:flex;gap:6px;margin-bottom:14px}
+.screen .bar i{width:10px;height:10px;border-radius:50%;background:#2a3655}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{aspect-ratio:16/10;border-radius:12px;background:linear-gradient(135deg,#1c2848,#111830);border:1px solid var(--line);display:flex;align-items:flex-end;padding:8px;font-size:12px;font-weight:600;color:#c7d0e3;position:relative}
+.tile.live::after{content:"● EN VIVO";position:absolute;top:8px;left:8px;font-size:10px;color:#ff6b6b}
+.tile.a{background:linear-gradient(135deg,#0f5b44,#0e2a2a)}
+.tile.b{background:linear-gradient(135deg,#3a2a6b,#16163a)}
+.tile.c{background:linear-gradient(135deg,#6b2a2a,#2a1216)}
+section{padding:50px 0;border-top:1px solid var(--line)}
+h2{font-size:30px;margin:0 0 8px}
+.sub{color:var(--muted);margin:0 0 28px}
+.feats{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.feat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.feat b{display:block;font-size:17px;margin:8px 0 4px}
+.feat p{margin:0;color:var(--muted);font-size:14px}
+.feat .ic{font-size:26px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tabs button{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:9px 16px;border-radius:999px;font-weight:600;cursor:pointer;font-size:15px}
+.tabs button.on{border-color:var(--accent);color:var(--accent)}
+.panel{display:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 26px}
+.panel.on{display:block}
+.panel ol{margin:0;padding-left:22px}
+.panel li{margin:8px 0}
+code{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-size:14px;word-break:break-all}
+.note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:16px 20px;color:var(--muted)}
+.note b{color:var(--text)}
+footer{padding:30px 0 50px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+@media (max-width:820px){.hero{grid-template-columns:1fr;padding:24px 0 40px}.screen{order:-1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="logo" href="./"><img src="app/icons/icon-192.png" width="36" height="36" alt="" style="border-radius:8px">Mi<span>TV</span></a>
+    <a class="btn ghost" href="app/">Abrir MiTV</a>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>Tu TV, <em>a tu manera</em>.</h1>
+      <p class="lead">Canales gratuitos de Costa Rica y Latinoamérica, deportes con agenda de partidos, radio, podcasts y tus películas. En el celular, la computadora y el televisor.</p>
+      <div class="btns">
+        <a class="btn" href="MiTV.apk" id="dlApk">⬇ Descargar para Android</a>
+        <a class="btn ghost" href="app/">▶ Usar en el navegador</a>
+        <button class="btn ghost" id="installBtn" style="display:none">＋ Instalar en este dispositivo</button>
+      </div>
+      <p class="ver" id="ver">Funciona en celulares Android, Android TV, Fire TV, TV box y computadoras.</p>
+    </div>
+    <div class="screen" aria-hidden="true">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <div class="tiles">
+        <div class="tile a live">Noticias</div><div class="tile b">Películas</div><div class="tile c live">Deportes</div>
+        <div class="tile">Radio</div><div class="tile a">Infantil</div><div class="tile b">Podcasts</div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Todo en una sola app</h2>
+    <p class="sub">Pensada para usarse con el control remoto, el teclado o la pantalla táctil.</p>
+    <div class="feats">
+      <div class="feat"><span class="ic">📺</span><b>Canales en vivo</b><p>Canales abiertos de 19 países, revisión automática de los que están funcionando y zapping con números.</p></div>
+      <div class="feat"><span class="ic">⚽</span><b>Agenda deportiva</b><p>Partidos del día con hora local, marcadores en vivo y recordatorios para no perderte nada.</p></div>
+      <div class="feat"><span class="ic">🗓️</span><b>Guía de programación</b><p>Qué están pasando ahora y qué sigue, con recordatorios y grabaciones.</p></div>
+      <div class="feat"><span class="ic">🎬</span><b>Tus películas</b><p>Tu colección o tu servidor Jellyfin, con portadas, subtítulos y “continuar viendo”.</p></div>
+      <div class="feat"><span class="ic">📻</span><b>Radio y podcasts</b><p>Emisoras de toda Latinoamérica y cualquier podcast, con modo de pantalla apagada.</p></div>
+      <div class="feat"><span class="ic">👨‍👩‍👧</span><b>Perfiles y control parental</b><p>Un perfil para cada quien, perfil infantil con PIN y tiempo de pantalla.</p></div>
+      <div class="feat"><span class="ic">🧩</span><b>Multivista</b><p>Hasta 4 canales al mismo tiempo. Ideal para jornadas de fútbol.</p></div>
+      <div class="feat"><span class="ic">☁️</span><b>Sincronización y control remoto</b><p>Tus favoritos en todos tus dispositivos y el celular como control del televisor.</p></div>
+    </div>
+  </section>
+
+  <section id="instalar">
+    <h2>Cómo instalarla</h2>
+    <p class="sub">Elige tu dispositivo.</p>
+    <div class="tabs" id="tabs">
+      <button class="on" data-p="android">Celular Android</button>
+      <button data-p="tv">Fire TV · Android TV · TV box</button>
+      <button data-p="pc">Computadora</button>
+      <button data-p="ios">iPhone / iPad</button>
+    </div>
+    <div class="panel on" id="p-android"><ol>
+      <li>Toca <a href="MiTV.apk">Descargar para Android</a>.</li>
+      <li>Abre el archivo descargado. Si el teléfono lo pide, permite <b>Instalar apps desconocidas</b> para tu navegador o explorador de archivos.</li>
+      <li>Toca <b>Instalar</b> y abre MiTV.</li>
+      <li>Las siguientes versiones se instalan encima: la app te avisa cuando hay una nueva.</li>
+    </ol></div>
+    <div class="panel" id="p-tv"><ol>
+      <li>En la tienda de tu televisor instala la app gratuita <b>Downloader</b>.</li>
+      <li>Ábrela y escribe esta dirección: <code id="apkUrl">MiTV.apk</code></li>
+      <li>Cuando termine la descarga, toca <b>Instalar</b>. Si lo pide, activa <b>Instalar apps desconocidas</b> para Downloader en los ajustes del televisor.</li>
+      <li>MiTV aparece en la pantalla de inicio. Usa las flechas y OK del control; con los números cambias de canal.</li>
+    </ol></div>
+    <div class="panel" id="p-pc"><ol>
+      <li>Abre <a href="app/">MiTV en el navegador</a> con Chrome o Edge.</li>
+      <li>Para instalarla como app, toca el ícono de instalar en la barra de direcciones (o el botón <b>Instalar en este dispositivo</b> de arriba).</li>
+      <li>Para ver <b>más canales</b> y usar las grabaciones, <a href="app/index.html" download="MiTV.html">descarga el archivo MiTV.html</a> y ábrelo con doble clic: algunos canales gratuitos usan conexiones que los navegadores bloquean dentro de páginas web.</li>
+    </ol></div>
+    <div class="panel" id="p-ios"><ol>
+      <li>Abre <a href="app/">MiTV</a> en <b>Safari</b>.</li>
+      <li>Toca el botón <b>Compartir</b> y luego <b>Agregar a pantalla de inicio</b>.</li>
+      <li>Algunos canales y funciones (como la búsqueda por voz) pueden no estar disponibles en iPhone.</li>
+    </ol></div>
+  </section>
+
+  <section>
+    <div class="note"><b>Contenido legal.</b> MiTV muestra canales que se transmiten de forma gratuita y abierta por internet (catálogo público iptv-org), radios públicas y el contenido que tú agregues. No incluye canales de pago. Para ver señales como ESPN o Fox Sports, agrega la lista de un proveedor con licencia que tengas contratado.</div>
+  </section>
+
+  <footer>MiTV · Hecho en Costa Rica 🇨🇷 · <span id="foot"></span></footer>
+</div>
+<script>
+const apk = new URL('MiTV.apk', location.href).href;
+document.getElementById('apkUrl').textContent = apk;
+fetch('version.json', { cache: 'no-store' }).then(r => r.json()).then(v => {
+  document.getElementById('ver').textContent = 'Versión ' + v.version + ' · Celulares Android, Android TV, Fire TV, TV box y computadoras.';
+  document.getElementById('foot').textContent = 'Versión ' + v.version;
+}).catch(() => {});
+document.getElementById('tabs').onclick = e => {
+  const b = e.target.closest('[data-p]'); if (!b) return;
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.p));
+};
+const ua = navigator.userAgent;
+const pick = /AFT|Android TV|BRAVIA|SmartTV/i.test(ua) ? 'tv' : /Android/.test(ua) ? 'android' : /iPhone|iPad/.test(ua) ? 'ios' : 'pc';
+document.querySelector(`[data-p="${pick}"]`).click();
+let deferred;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; document.getElementById('installBtn').style.display = ''; });
+document.getElementById('installBtn').onclick = async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice; deferred = null; document.getElementById('installBtn').style.display = 'none'; };
+</script>
+</body>
+</html>

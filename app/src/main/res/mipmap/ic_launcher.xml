@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fallback icon for Android 7.x (adaptive icon is used on 8.0+) -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/bg" />
+    <item android:drawable="@drawable/ic_foreground" />
+</layer-list>
