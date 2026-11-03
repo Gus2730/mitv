@@ -227,7 +227,7 @@ public class MainActivity extends Activity {
                 customViewCallback = callback;
                 root.addView(view, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
                 web.setVisibility(View.GONE);
-                setImmersive(true);
+                setFullscreenUi(true);
             }
 
             @Override
@@ -236,7 +236,7 @@ public class MainActivity extends Activity {
                 root.removeView(customView);
                 customView = null;
                 web.setVisibility(View.VISIBLE);
-                setImmersive(false);
+                setFullscreenUi(false);
                 if (customViewCallback != null) customViewCallback.onCustomViewHidden();
                 customViewCallback = null;
             }
@@ -330,7 +330,7 @@ public class MainActivity extends Activity {
         } catch (Exception ignored) { }
     }
 
-    private void setImmersive(boolean on) {
+    private void setFullscreenUi(boolean on) {
         View d = getWindow().getDecorView();
         d.setSystemUiVisibility(on
                 ? View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
