@@ -10,6 +10,7 @@ import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.PictureInPictureParams;
+import android.app.UiModeManager;
 import android.content.pm.PackageManager;
 import android.speech.RecognizerIntent;
 import org.json.JSONObject;
@@ -63,6 +64,14 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void enterPip() { runOnUiThread(MainActivity.this::startPip); }
+
+        @JavascriptInterface
+        public boolean isTv() {
+            UiModeManager ui = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+            return (ui != null && ui.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION)
+                    || getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                    || Build.MODEL.startsWith("AFT");
+        }
 
         @JavascriptInterface
         public boolean hasVoice() {
@@ -184,6 +193,11 @@ public class MainActivity extends Activity {
                 // Fetch channel lists and streams natively and add CORS headers,
                 // so channels without CORS support still play in the app.
                 String scheme = u.getScheme();
+                // Las imágenes (logos, portadas) las carga el WebView directo: así no ocupan
+                // el mismo canal que el video y la reproducción no se traba.
+                String accept = req.getRequestHeaders().get("Accept");
+                if (accept != null && accept.startsWith("image/")) return null;
+                if (req.isForMainFrame()) return null;
                 if ("GET".equals(req.getMethod()) && ("http".equals(scheme) || "https".equals(scheme))) {
                     return proxy(req);
                 }
