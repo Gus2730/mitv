@@ -72,6 +72,7 @@ aside .flag{font-size:18px;width:22px;text-align:center}
 .card .dot{position:absolute;bottom:8px;right:8px;width:9px;height:9px;border-radius:50%;z-index:2}
 .dot.ok{background:#2fd18b;box-shadow:0 0 6px #2fd18b}
 .dot.down{background:#6b7486}
+.dot.warn{background:#ffb547}
 .card .pbar2{height:4px;background:var(--line)}
 .card .pbar2 i{display:block;height:100%;background:var(--accent)}
 .empty,.loading,.notice{background:var(--panel);border:1px dashed var(--line);border-radius:var(--radius);padding:22px;color:var(--muted)}
@@ -464,10 +465,26 @@ function parseM3U(text, fallbackGroup){
       const comma = line.indexOf(',', lq >= 0 ? lq : 0);
       const name = (comma >= 0 ? line.slice(comma + 1).trim() : '') || attrs['tvg-name'] || 'Sin nombre';
       cur = { name: cleanName(name), logo: attrs['tvg-logo'] || '', group: attrs['group-title'] || fallbackGroup || '', id: attrs['tvg-id'] || '' };
-    } else if (line.startsWith('#')) continue;
-    else {
+    } else if (line.startsWith('#')){
+      // Algunos canales exigen que la petición diga de qué sitio viene (referrer) o qué programa la hace
+      if (cur){
+        let m;
+        if ((m = line.match(/^#EXTVLCOPT:http-referr?er=(.+)$/i))) cur.ref = m[1].trim();
+        else if ((m = line.match(/^#EXTVLCOPT:http-user-agent=(.+)$/i))) cur.ua = m[1].trim();
+        else if ((m = line.match(/^#EXTHTTP:(\{.*\})$/i))){ try { const j = JSON.parse(m[1]); cur.ref = j.Referer || j.referer || cur.ref; cur.ua = j['User-Agent'] || j['user-agent'] || cur.ua; } catch(e){} }
+      }
+      continue;
+    } else {
       const it = cur || { name: line.split('/').pop() || 'Canal', logo:'', group: fallbackGroup || '', id:'' };
-      it.url = line;
+      let url = line;
+      // Formato de Kodi: enlace|Referer=…&User-Agent=…
+      const pipe = url.indexOf('|');
+      if (pipe > 0){
+        new URLSearchParams(url.slice(pipe + 1)).forEach((v, k) => { if (/^referr?er$/i.test(k)) it.ref = v; if (/^user-agent$/i.test(k)) it.ua = v; });
+        url = url.slice(0, pipe);
+      }
+      it.url = url;
+      if ((it.ref || it.ua) && android && android.registerHeaders){ try { android.registerHeaders(new URL(url).host, it.ref || '', it.ua || ''); } catch(e){} }
       if (fallbackGroup && (/\.(mp4|mkv|avi|mov|m4v|webm)(\?|$)/i.test(line) || /movie|pel[ií]cul|vod|series/i.test(it.group))) it.kind = 'vod';
       out.push(it); cur = null;
     }
@@ -639,29 +656,83 @@ function nowNext(it){
    Revisión de canales
    ===================================================================== */
 let healthRun = 0;
-async function probe(url){
-  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 7000);
-  try {
-    try { const r = await fetch(url, { signal: ctl.signal, cache: 'no-store' }); return r.ok; }
-    catch(e){
-      if (ctl.signal.aborted) return false;
-      await fetch(url, { mode: 'no-cors', signal: ctl.signal, cache: 'no-store' }); return true; // responde, aunque sin CORS
-    }
-  } catch(e){ return false; }
-  finally { clearTimeout(tm); ctl.abort(); }
+/* Por qué un canal no se puede ver. 'ok' = funciona. Los motivos "app" solo afectan al navegador:
+   en la app Android (o en VLC) esos canales sí se pueden ver. */
+const WHY = {
+  ok: 'Funciona',
+  down: 'No responde: el enlace está caído o cambió',
+  offline: 'Sin transmisión en este momento (canal con horario limitado)',
+  html: 'El enlace ya no lleva a un video (el canal cambió su dirección)',
+  denied: 'El servidor rechaza la conexión (bloqueo por país o enlace vencido)',
+  segment: 'La lista responde pero el video no carga (bloqueo o enlace vencido)',
+  cors: 'El navegador lo bloquea; funciona en la app Android o con VLC',
+  mixed: 'Usa conexión no segura (http); funciona en la app Android o en el archivo MiTV.html',
+  headers: 'Necesita datos especiales de conexión; funciona en la app Android o con VLC',
+  timeout: 'Tarda demasiado en responder'
+};
+const APP_ONLY = ['cors', 'mixed', 'headers'];
+const isHttpsPage = () => location.protocol === 'https:';
+function browserBlock(it){
+  if (android) return null;
+  if (it.ref || it.ua) return 'headers';
+  if (isHttpsPage() && /^http:/i.test(it.url)) return 'mixed';
+  return null;
 }
+async function fetchT(url, opts, ms){
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), ms || 7000);
+  try { return await fetch(url, Object.assign({ signal: ctl.signal, cache: 'no-store' }, opts || {})); }
+  finally { clearTimeout(tm); setTimeout(() => ctl.abort(), 50); }
+}
+// deep = también revisa la lista de calidad y el primer pedazo de video (para el diagnóstico)
+async function probe(it, deep){
+  const pre = browserBlock(it); if (pre) return { why: pre };
+  let r;
+  try { r = await fetchT(it.url, null, deep ? 10000 : 7000); }
+  catch(e){
+    if (e.name === 'AbortError') return { why: 'timeout' };
+    try { await fetchT(it.url, { mode: 'no-cors' }, 6000); return { why: 'cors' }; } catch(e2){ return { why: 'down' }; }
+  }
+  if (r.status === 401 || r.status === 403) return { why: 'denied', code: r.status };
+  if (r.status === 404 || r.status === 410) return { why: /horario limitado/.test(it.name) ? 'offline' : 'down', code: r.status };
+  if (!r.ok) return { why: 'down', code: r.status };
+  const isList = /m3u8/i.test(it.url) || /mpegurl/i.test(r.headers.get('content-type') || '');
+  if (!isList) return { why: 'ok' };
+  const text = (await r.text()).slice(0, 200000);
+  if (!/#EXTM3U/.test(text)) return { why: /<html|<!doctype/i.test(text) ? 'html' : 'down' };
+  if (!deep) return { why: 'ok' };
+  // Lista principal → primera calidad → primer pedazo de video
+  let base = r.url || it.url, pl = text;
+  if (/#EXT-X-STREAM-INF/.test(pl)){
+    const v = pl.split(/\r?\n/).find((l, i, a) => l && !l.startsWith('#') && /#EXT-X-STREAM-INF/.test(a[i - 1] || ''));
+    if (!v) return { why: 'down' };
+    const vu = new URL(v.trim(), base).href;
+    let r2; try { r2 = await fetchT(vu, null, 8000); } catch(e){ return { why: 'segment' }; }
+    if (r2.status === 401 || r2.status === 403) return { why: 'denied', code: r2.status };
+    if (!r2.ok) return { why: 'segment', code: r2.status };
+    pl = await r2.text(); base = r2.url || vu;
+  }
+  const seg = pl.split(/\r?\n/).find(l => l && !l.startsWith('#'));
+  if (!seg) return { why: /#EXT-X-ENDLIST/.test(pl) ? 'down' : 'offline' };
+  try {
+    const r3 = await fetchT(new URL(seg.trim(), base).href, { headers: { Range: 'bytes=0-2047' } }, 8000);
+    if (r3.status === 401 || r3.status === 403) return { why: 'denied', code: r3.status };
+    if (!r3.ok && r3.status !== 206) return { why: 'segment', code: r3.status };
+  } catch(e){ return { why: 'segment' }; }
+  return { why: 'ok' };
+}
+const dotClass = h => !h ? '' : h.ok ? 'ok' : APP_ONLY.includes(h.why) ? 'warn' : 'down';
 async function runHealth(list, grid){
   if (!S.cfg.health) return;
   const run = ++healthRun;
   const todo = list.map((it, i) => [it, i]).filter(([it]) => !noProbe(it) && !(S.health[it.url] && Date.now() - S.health[it.url].t < HEALTH_MIN*60e3)).slice(0, LITE ? 60 : 250);
   const status = content.querySelector('#hstat');
   let done = 0;
-  const paint = (it, i) => { const d = grid.querySelector(`.card[data-i="${i}"] .dot`); if (d) d.className = 'dot ' + (S.health[it.url].ok ? 'ok' : 'down'); };
+  const paint = (it, i) => { const d = grid.querySelector(`.card[data-i="${i}"] .dot`); if (d){ d.className = 'dot ' + dotClass(S.health[it.url]); d.title = WHY[S.health[it.url].why] || ''; } };
   const worker = async () => {
     while (todo.length && run === healthRun && !player.classList.contains('open')){
       const [it, i] = todo.shift();
-      const ok = await probe(it.url);
-      S.health[it.url] = { ok, t: Date.now() };
+      const res = await probe(it);
+      S.health[it.url] = { ok: res.why === 'ok', why: res.why, code: res.code, t: Date.now() };
       done++; paint(it, i);
       if (status) status.textContent = `Revisando canales… ${done}`;
     }
@@ -765,7 +836,7 @@ function cardsHTML(items, { numbers, poster }){
       <div class="meta"><div class="name">${esc(it.title || it.name)}</div>
         ${nn && nn.now ? `<div class="now">Ahora: ${esc(nn.now.title)}</div>` : `<div class="grp">${esc(it.year && poster ? it.year : (it.group || '').split(';').map(g => catName(g.trim())).join(' · ') || ' ')}</div>`}
       </div>
-      ${!noProbe(it) && S.cfg.health ? `<span class="dot ${h ? (h.ok ? 'ok' : 'down') : ''}"></span>` : ''}
+      ${!noProbe(it) && S.cfg.health ? `<span class="dot ${dotClass(h)}" title="${h ? esc(WHY[h.why] || '') : ''}"></span>` : ''}
     </button>`;
   }).join('');
 }
@@ -775,7 +846,7 @@ function renderGrid(target, items, emptyMsg, opts = {}){
   const list = visibleItems(items);
   const live = opts.live !== false && !opts.poster;
   if (live) S.visible = list;
-  const head = live && S.cfg.health ? `<div class="toolbar"><button class="chip ${S.cfg.onlyOk ? 'active' : ''}" data-act="onlyok">Solo canales activos</button><span class="muted" id="hstat" style="font-size:13px"></span></div>` : '';
+  const head = live && S.cfg.health ? `<div class="toolbar"><button class="chip ${S.cfg.onlyOk ? 'active' : ''}" data-act="onlyok">Solo canales activos</button><button class="chip" data-act="diag">🩺 Diagnóstico</button><span class="muted" id="hstat" style="font-size:13px"></span></div>` : '';
   if (!list.length){ target.innerHTML = head + `<div class="empty">${profile().kids && items.length ? 'No hay contenido infantil aquí.' : (emptyMsg || 'No hay resultados.')}</div>`; bindHead(target); return; }
   const STEP = IS_TV ? 120 : 600, MAX = target._max || STEP;
   target.innerHTML = head + `<div class="grid ${opts.poster ? 'posters' : ''} ${opts.row ? 'rowg' : ''}">${cardsHTML(list.slice(0, MAX), { numbers: live, poster: opts.poster })}</div>` +
@@ -797,6 +868,8 @@ function renderGrid(target, items, emptyMsg, opts = {}){
 function bindHead(target){
   const b = target.querySelector('[data-act=onlyok]');
   if (b) b.onclick = () => { S.cfg.onlyOk = !S.cfg.onlyOk; saveCfg(); render(); };
+  const d = target.querySelector('[data-act=diag]');
+  if (d) d.onclick = () => runDiagnosis(S.visible);
 }
 async function withLoading(target, fn){
   target.innerHTML = '<div class="loading">Cargando…</div>';
@@ -1455,11 +1528,17 @@ function stopPlayback(){
 }
 function showMsg(html, spinner){ pMsg.innerHTML = (spinner ? '<div class="spinner"></div>' : '') + html; pMsg.classList.add('show'); }
 function hideMsg(){ pMsg.classList.remove('show'); }
-function failMsg(){
+async function failMsg(){
   const it = S.current && S.current.items[S.current.index];
-  showMsg(it && isVod(it) ? `<b>No se pudo reproducir este video.</b><p style="color:#aab">Puede que el formato no sea compatible con este navegador. Prueba con un archivo MP4 o desde Jellyfin.</p>`
-    : `<b>Este canal no está disponible ahora.</b><p style="color:#aab">Puede estar caído, bloqueado fuera de su país o no ser compatible. Prueba “Más ⋯ → Abrir en VLC” o cambia de canal con ▲ ▼.</p>`);
-  if (it && !isVod(it)){ S.health[it.url] = { ok: false, t: Date.now() }; store.set('health', S.health); }
+  if (it && isVod(it)){ showMsg(`<b>No se pudo reproducir este video.</b><p style="color:#aab">Puede que el formato no sea compatible con este navegador. Prueba con un archivo MP4 o desde Jellyfin.</p>`); return; }
+  showMsg(`<b>Este canal no está disponible ahora.</b><p style="color:#aab" id="whyMsg">Revisando el motivo…</p>`);
+  if (!it) return;
+  const res = await probe(it, true).catch(() => ({ why: 'down' }));
+  if (res.why === 'ok') res.why = 'segment';
+  S.health[it.url] = { ok: false, why: res.why, code: res.code, t: Date.now() }; store.set('health', S.health);
+  const w = $('#whyMsg'); if (!w || S.current.items[S.current.index] !== it) return;
+  w.innerHTML = esc(WHY[res.why] || WHY.down) + (res.code ? ` (código ${res.code})` : '') + '.<br>' +
+    (APP_ONLY.includes(res.why) ? 'Prueba “Más ⋯ → Abrir en VLC”.' : res.why === 'offline' ? 'Vuelve a intentarlo más tarde.' : 'Cambia de canal con ▲ ▼.');
 }
 function nowNextLine(it){
   const nn = nowNext(it); if (!nn) return '';
@@ -1467,6 +1546,7 @@ function nowNextLine(it){
 }
 
 function startSource(it){
+  if (android && android.setStreamHeaders) android.setStreamHeaders(it.ref || '', it.ua || '');
   if (it.kind === 'youtube'){ showYouTube(it); android && android.setPlaying && android.setPlaying(true); return; }
   const url = it.url;
   const isHls = /\.m3u8(\?|$)/i.test(url) || /m3u8|\/hls\//i.test(url);
@@ -1556,8 +1636,12 @@ async function play(items, index){
     $('#pResume').style.display = '';
     toast('Continuando desde ' + fmtDur(pr.t));
   }
-  startSource(it);
-  if (it.kind !== 'youtube') stallTimer = setTimeout(() => { if (video.readyState < 2 && !pMsg.innerHTML.includes('Reconectando') && !pMsg.innerHTML.includes('tapPlay')) failMsg(); }, 25000);
+  const blocked = !isVod(it) && it.kind !== 'youtube' && browserBlock(it);
+  if (blocked){
+    showMsg(`<b>Este canal no se puede ver en el navegador.</b><p style="color:#aab">${esc(WHY[blocked])}.</p><button class="btn small" id="tryVlc">Abrir en VLC</button>`);
+    $('#tryVlc').onclick = () => openVlc(it.url);
+  } else startSource(it);
+  if (it.kind !== 'youtube' && !blocked) stallTimer = setTimeout(() => { if (video.readyState < 2 && !pMsg.innerHTML.includes('Reconectando') && !pMsg.innerHTML.includes('tapPlay')) failMsg(); }, 25000);
   // Vigilante: si el video en vivo se congela, reconectar
   watchdog = setInterval(() => {
     if (video.paused || isVod(it) || it.kind === 'youtube') { lastProgress = Date.now(); lastT = video.currentTime; return; }
@@ -1810,7 +1894,7 @@ document.addEventListener('keydown', e => {
 /* =====================================================================
    MiTV 3 · Versión, actualizaciones y pantalla de carga
    ===================================================================== */
-const APP_VERSION = '3.1';
+const APP_VERSION = '3.2';
 const BUILT_HOME = '__MITV_HOME__';
 function homeUrl(){
   if (S.cfg.homeUrl) return S.cfg.homeUrl.replace(/\/?$/, '/');
@@ -2730,6 +2814,50 @@ async function openRemote(){
   md.querySelector('.remote').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b){ e.preventDefault(); send(b.dataset.k); } });
   md.querySelector('#rmSay').onsubmit = e => { e.preventDefault(); const v = md.querySelector('#rmText').value.trim(); if (v){ send('voice', v); md.querySelector('#rmText').value = ''; } };
   md.querySelector('#rmNo').onclick = () => closeModal();
+}
+
+/* =====================================================================
+   Diagnóstico de canales
+   ===================================================================== */
+async function runDiagnosis(list){
+  const items = list.filter(i => !noProbe(i));
+  if (!items.length){ toast('No hay canales para revisar'); return; }
+  let stop = false;
+  const md = openModal(`<h3>🩺 Diagnóstico de canales</h3>
+    <p class="muted" style="margin-top:0">Revisa cada canal desde este dispositivo: la lista, la calidad y el primer pedazo de video. Puede tardar un par de minutos.</p>
+    <p id="dgProg"><b>0</b> de ${items.length}</p><div id="dgSum"></div><div id="dgList" style="max-height:42vh;overflow:auto;font-size:13px"></div>
+    <div class="actions"><button class="btn ghost" id="dgCopy" disabled>Copiar informe</button><button class="btn" id="dgNo" autofocus>Cerrar</button></div>`,
+    { onClose: () => { stop = true; } });
+  md.querySelector('#dgNo').onclick = () => closeModal();
+  const res = [], queue = items.map((it, i) => [it, i]);
+  let done = 0;
+  const order = ['ok', 'offline', 'cors', 'mixed', 'headers', 'denied', 'segment', 'html', 'timeout', 'down'];
+  const draw = () => {
+    md.querySelector('#dgProg').innerHTML = done < items.length ? `<b>${done}</b> de ${items.length} revisados…` : `<b>Listo:</b> ${items.length} canales revisados desde ${esc(deviceName())}.`;
+    const cnt = {}; res.forEach(r => { if (r) cnt[r.why] = (cnt[r.why] || 0) + 1; });
+    md.querySelector('#dgSum').innerHTML = order.filter(k => cnt[k]).map(k => `<div class="hbar" style="grid-template-columns:1fr 50px"><span><span class="dot ${k === 'ok' ? 'ok' : APP_ONLY.includes(k) ? 'warn' : 'down'}" style="position:static;display:inline-block;margin-right:6px"></span>${esc(WHY[k])}</span><b>${cnt[k]}</b></div>`).join('');
+    md.querySelector('#dgList').innerHTML = res.map((r, i) => r && r.why !== 'ok' ? `<div class="list-item"><div class="grow"><b>${esc(items[i].name)}</b><small>${esc(WHY[r.why] || r.why)}${r.code ? ' · código ' + r.code : ''}</small></div></div>` : '').join('');
+  };
+  const worker = async () => {
+    while (queue.length && !stop){
+      const [it, i] = queue.shift();
+      const r = await probe(it, true).catch(() => ({ why: 'down' }));
+      res[i] = r; done++;
+      S.health[it.url] = { ok: r.why === 'ok', why: r.why, code: r.code, t: Date.now() };
+      draw();
+    }
+  };
+  await Promise.all(Array.from({ length: LITE ? 2 : 4 }, worker));
+  if (stop) return;
+  store.set('health', S.health);
+  const btn = md.querySelector('#dgCopy'); btn.disabled = false;
+  const report = `Diagnóstico MiTV ${APP_VERSION} · ${deviceName()} · ${new Date().toLocaleString('es-CR')}\n` +
+    items.map((it, i) => `${res[i].why === 'ok' ? 'OK ' : 'XX '} ${it.name} | ${res[i].why}${res[i].code ? ' ' + res[i].code : ''} | ${it.url}`).join('\n');
+  btn.onclick = async () => {
+    try { await navigator.clipboard.writeText(report); toast('Informe copiado'); }
+    catch(e){ md.querySelector('#dgList').innerHTML = `<textarea style="width:100%;height:200px;font-size:11px" readonly>${esc(report)}</textarea>`; toast('Selecciónalo y cópialo'); }
+  };
+  if (S.tab === 'vivo' || S.tab === 'deportes') render();
 }
 
 /* =====================================================================
