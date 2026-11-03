@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +49,9 @@ public class MainActivity extends Activity {
     private static final int FILE_REQUEST = 42;
     private static final int VOICE_REQUEST = 43;
     private volatile boolean bgAudio = false;
+    /** Datos de conexión que algunos canales exigen (sitio de origen y programa), por servidor */
+    private final Map<String, String[]> hostHeaders = new ConcurrentHashMap<>();
+    private volatile String[] streamHeaders = null;
 
     private WebView web;
     private FrameLayout root;
@@ -124,6 +128,17 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void setBackgroundAudio(boolean on) { bgAudio = on; }
+
+        @JavascriptInterface
+        public void registerHeaders(String host, String referrer, String userAgent) {
+            if (host != null && !host.isEmpty()) hostHeaders.put(host, new String[]{referrer, userAgent});
+        }
+
+        @JavascriptInterface
+        public void setStreamHeaders(String referrer, String userAgent) {
+            boolean empty = (referrer == null || referrer.isEmpty()) && (userAgent == null || userAgent.isEmpty());
+            streamHeaders = empty ? null : new String[]{referrer, userAgent};
+        }
     }
 
     private void js(String code) { runOnUiThread(() -> web.evaluateJavascript(code, null)); }
@@ -273,6 +288,16 @@ public class MainActivity extends Activity {
                     String k = h.getKey();
                     if (k.equalsIgnoreCase("Origin") || k.equalsIgnoreCase("Referer") || k.equalsIgnoreCase("Accept-Encoding")) continue;
                     c.setRequestProperty(k, h.getValue());
+                }
+                String[] extra = hostHeaders.get(new URL(url).getHost());
+                if (extra == null) extra = hostHeaders.get(new URL(url).getAuthority());
+                if (extra == null) extra = streamHeaders;
+                if (extra != null) {
+                    if (extra[0] != null && !extra[0].isEmpty()) {
+                        c.setRequestProperty("Referer", extra[0]);
+                        try { URL r = new URL(extra[0]); c.setRequestProperty("Origin", r.getProtocol() + "://" + r.getAuthority()); } catch (Exception ignored) { }
+                    }
+                    if (extra[1] != null && !extra[1].isEmpty()) c.setRequestProperty("User-Agent", extra[1]);
                 }
                 int code = c.getResponseCode();
                 if (code >= 300 && code < 400 && c.getHeaderField("Location") != null) {
