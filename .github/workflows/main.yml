@@ -1,0 +1,77 @@
+name: Compilar y publicar MiTV
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Preparar la firma del APK
+        env:
+          KS: ${{ secrets.MITV_KEYSTORE }}
+        run: |
+          if [ -n "$KS" ]; then
+            echo "$KS" | base64 -d > app/mitv.jks
+          else
+            echo "::warning::No configuraste el secreto MITV_KEYSTORE. Se usará una firma temporal y el APK NO se podrá instalar encima de versiones anteriores."
+            keytool -genkeypair -keystore app/mitv.jks -alias mitv -storepass mitvfirma2026 -keypass mitvfirma2026 \
+              -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=MiTV"
+          fi
+
+      - name: Poner la dirección de la página en la app
+        run: |
+          OWNER=$(echo "${GITHUB_REPOSITORY%/*}" | tr 'A-Z' 'a-z')
+          REPO="${GITHUB_REPOSITORY#*/}"
+          if [ "$(echo "$REPO" | tr 'A-Z' 'a-z')" = "$OWNER.github.io" ]; then HOME_URL="https://$OWNER.github.io/"; else HOME_URL="https://$OWNER.github.io/$REPO/"; fi
+          echo "Página: $HOME_URL"
+          sed -i "s#__MITV_HOME__#$HOME_URL#g" app/src/main/assets/index.html docs/app/index.html
+
+      - name: Compilar APK
+        run: gradle assembleRelease --no-daemon
+
+      - name: Preparar la página
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk docs/MiTV.apk
+          VER=$(grep versionName app/build.gradle | sed -E 's/.*"(.*)".*/\1/')
+          echo "{\"version\":\"$VER\",\"apk\":\"MiTV.apk\"}" > docs/version.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MiTV-apk
+          path: docs/MiTV.apk
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
