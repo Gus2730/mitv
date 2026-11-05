@@ -685,6 +685,16 @@ async function fetchT(url, opts, ms){
 }
 // deep = también revisa la lista de calidad y el primer pedazo de video (para el diagnóstico)
 async function probe(it, deep){
+  const r0 = await probeOne(it, it.url, deep);
+  if (r0.why === 'ok' || !it.alts || !it.alts.length || APP_ONLY.includes(r0.why)) return r0;
+  for (const alt of it.alts){
+    const r = await probeOne(it, alt, deep);
+    if (r.why === 'ok') return { why: 'ok', alt };
+  }
+  return r0;
+}
+async function probeOne(it0, url, deep){
+  const it = Object.assign({}, it0, { url });
   const pre = browserBlock(it); if (pre) return { why: pre };
   let r;
   try { r = await fetchT(it.url, null, deep ? 10000 : 7000); }
@@ -732,7 +742,7 @@ async function runHealth(list, grid){
     while (todo.length && run === healthRun && !player.classList.contains('open')){
       const [it, i] = todo.shift();
       const res = await probe(it);
-      S.health[it.url] = { ok: res.why === 'ok', why: res.why, code: res.code, t: Date.now() };
+      S.health[it.url] = { ok: res.why === 'ok', why: res.why, code: res.code, alt: res.alt, t: Date.now() };
       done++; paint(it, i);
       if (status) status.textContent = `Revisando canales… ${done}`;
     }
@@ -966,7 +976,8 @@ async function currentSource(){
   }
   const c = COUNTRIES.find(x => x[0] === S.country);
   const title = S.country === 'spa' || !c ? '🌎 Todos los canales en español' : `${c[2]} ${c[1]}`;
-  return { title, sub: 'Canales gratuitos que se transmiten abiertamente por internet. Algunos pueden estar caídos o limitados a su país.', items: await loadRemote(countryUrl(S.country === 'spa' || !c ? 'spa' : c[0])) };
+  const cc = S.country === 'spa' || !c ? 'spa' : c[0];
+  return { title, sub: 'Canales gratuitos que se transmiten abiertamente por internet, de varias fuentes públicas. Algunos pueden estar caídos o limitados a su país.', items: await countryItems(cc) };
 }
 
 function viewVivo(){
@@ -1534,6 +1545,7 @@ async function failMsg(){
   showMsg(`<b>Este canal no está disponible ahora.</b><p style="color:#aab" id="whyMsg">Revisando el motivo…</p>`);
   if (!it) return;
   const res = await probe(it, true).catch(() => ({ why: 'down' }));
+  if (res.why === 'ok' && res.alt && res.alt !== playUrl(it)){ it._url = res.alt; S.health[it.url] = { ok: true, why: 'ok', alt: res.alt, t: Date.now() }; retries = 0; showMsg('Probando otro enlace de este canal…', true); startSource(it); return; }
   if (res.why === 'ok') res.why = 'segment';
   S.health[it.url] = { ok: false, why: res.why, code: res.code, t: Date.now() }; store.set('health', S.health);
   const w = $('#whyMsg'); if (!w || S.current.items[S.current.index] !== it) return;
@@ -1548,7 +1560,7 @@ function nowNextLine(it){
 function startSource(it){
   if (android && android.setStreamHeaders) android.setStreamHeaders(it.ref || '', it.ua || '');
   if (it.kind === 'youtube'){ showYouTube(it); android && android.setPlaying && android.setPlaying(true); return; }
-  const url = it.url;
+  const url = playUrl(it);
   const isHls = /\.m3u8(\?|$)/i.test(url) || /m3u8|\/hls\//i.test(url);
   if (isHls && window.Hls && Hls.isSupported()){
     hls = new Hls({ enableWorker: true, lowLatencyMode: false, backBufferLength: isVod(it) ? 90 : 900, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 3, fragLoadingMaxRetry: 4 });
@@ -1583,6 +1595,12 @@ function startSource(it){
 function reconnect(){
   const it = S.current && S.current.items[S.current.index];
   if (!it) return;
+  if ((retries >= 3 || it.local) && tryAlt(it)){
+    retries = 0; if (hls){ hls.destroy(); hls = null; }
+    showMsg('Probando otro enlace de este canal…', true);
+    setTimeout(() => { if (player.classList.contains('open') && S.current.items[S.current.index] === it) startSource(it); }, 800);
+    return;
+  }
   if (retries >= 3 || it.local){ if (hls){ hls.destroy(); hls = null; } failMsg(); return; }
   retries++;
   showMsg(`Reconectando… (${retries}/3)`, true);
@@ -1894,7 +1912,7 @@ document.addEventListener('keydown', e => {
 /* =====================================================================
    MiTV 3 · Versión, actualizaciones y pantalla de carga
    ===================================================================== */
-const APP_VERSION = '3.2';
+const APP_VERSION = '3.3';
 const BUILT_HOME = '__MITV_HOME__';
 function homeUrl(){
   if (S.cfg.homeUrl) return S.cfg.homeUrl.replace(/\/?$/, '/');
@@ -2436,15 +2454,24 @@ async function rbGet(path){
   }
   throw last;
 }
+const RADIO_TAG = { cr: 'costa rica', mx: 'mexico', gt: 'guatemala', sv: 'el salvador', hn: 'honduras', ni: 'nicaragua', pa: 'panama', co: 'colombia', ve: 'venezuela', ec: 'ecuador', pe: 'peru', bo: 'bolivia', cl: 'chile', ar: 'argentina', uy: 'uruguay', py: 'paraguay', do: 'republica dominicana', cu: 'cuba', pr: 'puerto rico' };
 async function radioStations(cc){
   const key = 'rb:' + cc;
   if (S.cache[key]) return S.cache[key];
   const c = store.get('c:' + key, null);
   let raw;
   if (c && Date.now() - c.t < 24*3600e3) raw = c.v;
-  else { raw = await rbGet(`/json/stations/bycountrycodeexact/${cc.toUpperCase()}?hidebroken=true&order=clickcount&reverse=true&limit=300`); store.set('c:' + key, { t: Date.now(), v: raw.map(s => ({ name: s.name, url_resolved: s.url_resolved || s.url, favicon: s.favicon, tags: s.tags, stationuuid: s.stationuuid, codec: s.codec, bitrate: s.bitrate })) }); }
+  else {
+    const CC = cc.toUpperCase(), tag = RADIO_TAG[cc];
+    // Además del país, buscar emisoras etiquetadas con el nombre del país
+    const reqs = [rbGet(`/json/stations/bycountrycodeexact/${CC}?hidebroken=true&order=clickcount&reverse=true&limit=500`)];
+    if (tag) reqs.push(rbGet(`/json/stations/search?tag=${encodeURIComponent(tag)}&hidebroken=true&order=clickcount&reverse=true&limit=300`).then(l => l.filter(s => !s.countrycode || s.countrycode === CC)).catch(() => []));
+    raw = (await Promise.all(reqs)).flat();
+    store.set('c:' + key, { t: Date.now(), v: raw.map(s => ({ name: s.name, url_resolved: s.url_resolved || s.url, favicon: s.favicon, tags: s.tags, stationuuid: s.stationuuid, codec: s.codec, bitrate: s.bitrate })) });
+  }
   const seen = new Set();
-  return (S.cache[key] = raw.filter(s => s.url_resolved && !seen.has(s.name.trim().toLowerCase()) && seen.add(s.name.trim().toLowerCase()))
+  const nk = s => normName(s.name) || s.name.trim().toLowerCase();
+  return (S.cache[key] = raw.filter(s => s.url_resolved && s.name && !seen.has(nk(s)) && seen.add(nk(s)))
     .map(s => ({ name: s.name.trim(), url: s.url_resolved, logo: s.favicon || '', group: (s.tags || '').split(',').filter(Boolean).slice(0, 2).join(' · ') || 'Radio', id: 'rb:' + s.stationuuid, kind: 'radio' })));
 }
 function viewRadio(){
@@ -2455,8 +2482,12 @@ function viewRadio(){
   side.onclick = e => { const b = e.target.closest('button'); if (!b) return; S.radioView = b.dataset.r; S.podView = null; render(); };
   if (v === 'pod') return viewPodcasts();
   if (v === 'fav'){
-    content.innerHTML = '<h2>⭐ Mis radios</h2><p class="sub">Marca radios con ☆ mientras las escuchas.</p><div id="g"></div>';
-    return renderGrid($('#g'), P.favs.filter(f => f.kind === 'radio'), 'Todavía no tienes radios favoritas.', { live: false });
+    content.innerHTML = `<h2>⭐ Mis radios</h2><p class="sub">Tus favoritas (marca con ☆ mientras escuchas) y las emisoras que agregues tú.</p>
+      <form id="fMyRadio" class="row"><div class="field" style="max-width:220px"><input id="mrName" placeholder="Nombre de la radio" required></div><div class="field"><input id="mrUrl" type="url" placeholder="Enlace de transmisión (https://…)" required></div><button class="btn">Agregar radio</button></form>
+      <p class="muted" style="font-size:13px;margin-top:0">El enlace de transmisión suele estar en la página de la emisora, en el botón “Escuchar en vivo”. También puedes copiarlo desde VLC o desde otra app de radio.</p><div id="g"></div>`;
+    $('#fMyRadio').onsubmit = e => { e.preventDefault(); addCustom($('#mrName').value.trim(), $('#mrUrl').value.trim(), 'radio'); render(); };
+    const mine = customItems('radio');
+    return renderGrid($('#g'), [...mine, ...P.favs.filter(f => f.kind === 'radio' && !mine.some(m => m.url === f.url))], 'Todavía no tienes radios favoritas.', { live: false });
   }
   const c = COUNTRIES.find(x => x[0] === v) || COUNTRIES[0];
   content.innerHTML = `<h2>📻 Radios de ${c[2]} ${esc(c[1])}</h2><p class="sub">Emisoras que transmiten por internet, ordenadas por popularidad. Usa el buscador para encontrar la tuya.</p><div id="g"></div>`;
@@ -2560,12 +2591,24 @@ function ytPage(yt){
   if (yt.type === 'video') return 'https://www.youtube.com/watch?v=' + yt.id;
   return 'https://www.youtube.com/channel/' + yt.id + (yt.type === 'live' ? '/live' : '/videos');
 }
-function showYouTube(it){
+async function showYouTube(it, mode){
   const box = $('#pYt');
-  box.innerHTML = `<iframe src="${esc(ytEmbed(it.yt))}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
-    <a class="btn ghost small ytopen" href="${esc(ytPage(it.yt))}" target="_blank" rel="noopener">Abrir en YouTube</a>`;
-  box.style.display = 'block';
-  video.style.display = 'none';
+  box.style.display = 'block'; video.style.display = 'none';
+  let yt = it.yt;
+  if (yt.type === 'path'){
+    box.innerHTML = '<div class="pmsg show" style="position:absolute"><div class="spinner"></div>Buscando el canal…</div>';
+    try { yt = { type: 'live', id: await resolveYtPath(yt.path) }; }
+    catch(e){
+      box.innerHTML = `<div class="pmsg show" style="position:absolute"><b>Este canal se abre en YouTube.</b><p style="color:#aab">${android ? 'No se pudo encontrar el canal.' : 'En el navegador no se puede abrir aquí; en la app Android sí.'}</p><a class="btn" href="https://www.youtube.com/${esc(yt.path.replace(/\/live$/, ''))}/live" target="_blank" rel="noopener">Abrir en YouTube</a></div>`;
+      return;
+    }
+    if (S.current && S.current.items[S.current.index] !== it) return;
+  }
+  const show = mode === 'uploads' && yt.type === 'live' ? { type: 'uploads', id: yt.id } : yt;
+  box.innerHTML = `<iframe src="${esc(ytEmbed(show))}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+    <div class="ytopen row">${yt.type === 'live' ? `<button class="btn ghost small" id="ytMode">${show.type === 'live' ? '📼 Últimos videos' : '● Ver en vivo'}</button>` : ''}<a class="btn ghost small" href="${esc(ytPage(show))}" target="_blank" rel="noopener">Abrir en YouTube</a></div>`;
+  const b = $('#ytMode'); if (b) b.onclick = () => showYouTube(it, show.type === 'live' ? 'uploads' : 'live');
+  if (yt.type === 'live' && show.type === 'live') toast('Si no está transmitiendo ahora, toca “Últimos videos”');
   hideMsg();
 }
 function hideYouTube(){ const b = $('#pYt'); b.innerHTML = ''; b.style.display = 'none'; video.style.display = ''; }
@@ -2817,6 +2860,96 @@ async function openRemote(){
 }
 
 /* =====================================================================
+   Fuentes adicionales de canales
+   ===================================================================== */
+const FREE_TV = 'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8';
+const FTV_GROUP = { cr: 'Costa Rica', mx: 'Mexico', ar: 'Argentina', cl: 'Chile', pe: 'Peru', ve: 'Venezuela', py: 'Paraguay', do: 'Dominican Republic', spa: 'News (ES)' };
+// Transmisiones oficiales en YouTube (ID del canal confirmado)
+const YT_OFFICIAL = {
+  cr: [
+    { name: 'Teletica · en vivo por YouTube', id: 'UCOC6n5gbktagxIUrQrp42yw' },
+    { name: 'Noticias Repretel · en vivo por YouTube', id: 'UCr6TeVofbyCvtCdxV_niQKQ' }
+  ]
+};
+const isIpHost = u => { try { return /^\d{1,3}(\.\d{1,3}){3}$/.test(new URL(u).hostname); } catch(e){ return true; } };
+async function freeTvGroup(cc){
+  const group = FTV_GROUP[cc]; if (!group) return [];
+  let all;
+  try { all = await loadRemote(FREE_TV); } catch(e){ return []; }
+  delete all.epg; // sus guías son archivos enormes: no cargarlas
+  const inGroup = all.filter(i => (i.group || '') === group);
+  // Enlaces repetidos para varios canales distintos no son confiables
+  const count = {}; inGroup.forEach(i => { count[i.url] = (count[i.url] || 0) + 1; });
+  return inGroup.filter(i => count[i.url] === 1 && !isIpHost(i.url)).map(i => {
+    let name = i.name.replace(/[ⓈⓎⓖⒼ]/g, '').trim();
+    const geo = /Ⓖ/.test(i.name);
+    const yt = i.url.match(/youtube\.com\/(@[\w.-]+|c\/[\w.-]+|user\/[\w.-]+|channel\/UC[\w-]{22})/);
+    const base = { name: geo ? name + ' · solo en su país' : name, logo: i.logo, id: i.id, group: cc === 'spa' ? 'News' : 'General', src: 'Free-TV' };
+    if (yt) return Object.assign(base, { kind: 'youtube', url: 'yt:path:' + yt[1], yt: yt[1].startsWith('channel/') ? { type: 'live', id: yt[1].slice(8) } : { type: 'path', path: yt[1] }, group: 'YouTube' });
+    return Object.assign(base, { url: i.url });
+  });
+}
+function officialYt(cc){
+  return (YT_OFFICIAL[cc] || []).map(y => ({ name: y.name, kind: 'youtube', url: 'yt:live:' + y.id, yt: { type: 'live', id: y.id }, group: 'YouTube', src: 'YouTube oficial' }));
+}
+// Une la lista principal con las adicionales: mismo canal → enlace alterno de respaldo
+const baseName = n => normName(String(n).replace(/·.*$/, '').replace(/\b(hd|sd|tv|canal|television|televisión)\b/gi, ''));
+function mergeSources(primary, extras){
+  const out = primary.map(i => Object.assign({}, i));
+  const byName = new Map(); out.forEach(i => { const k = baseName(i.name); if (k && !byName.has(k)) byName.set(k, i); });
+  const urls = new Set(out.map(i => i.url));
+  for (const e of extras){
+    if (urls.has(e.url)) continue;
+    const k = baseName(e.name), hit = k && byName.get(k);
+    if (hit && e.kind !== 'youtube' && hit.kind !== 'youtube'){ (hit.alts = hit.alts || []).push(e.url); }
+    else { out.push(e); if (k) byName.set(k, e); }
+    urls.add(e.url);
+  }
+  return out;
+}
+async function countryItems(cc){
+  const primary = await loadRemote(countryUrl(cc));
+  const extra = [...await freeTvGroup(cc), ...officialYt(cc)];
+  const custom = cc === 'cr' ? customItems('tv') : [];
+  return mergeSources(primary, [...extra, ...custom]);
+}
+
+/* Enlace que se está usando (principal o alterno que sí funciona) */
+const playUrl = it => it._url || (S.health[it.url] && S.health[it.url].alt) || it.url;
+function tryAlt(it){
+  const all = [it.url, ...(it.alts || [])];
+  const tried = it._tried || (it._tried = new Set([playUrl(it)]));
+  const next = all.find(u => !tried.has(u));
+  if (!next) return false;
+  tried.add(next); it._url = next;
+  return true;
+}
+
+/* YouTube: obtener el ID de un canal a partir de su @nombre (solo en la app Android) */
+async function resolveYtPath(path){
+  const ck = 'ytid:' + path.toLowerCase();
+  const c = store.get(ck, null); if (c) return c;
+  if (!android) throw new Error('solo en la app Android');
+  const html = await fetchText('https://www.youtube.com/' + path.replace(/\/live$/, ''));
+  const m = html.match(/"(?:externalId|channelId|browseId)":"(UC[\w-]{22})"/) || html.match(/youtube\.com\/channel\/(UC[\w-]{22})/);
+  if (!m) throw new Error('no se encontró el canal');
+  store.set(ck, m[1]);
+  return m[1];
+}
+
+/* =====================================================================
+   Canales y radios propios
+   ===================================================================== */
+function addCustom(name, url, kind){
+  if (!name || !/^https?:\/\//i.test(url)){ toast('Revisa el nombre y el enlace'); return; }
+  S.cfg.custom = [...(S.cfg.custom || []), { name, url, kind: kind === 'radio' ? 'radio' : 'tv', logo: '' }];
+  saveCfg(); toast(kind === 'radio' ? 'Radio agregada a Mis radios' : 'Canal agregado a Costa Rica');
+}
+function customItems(kind){
+  return (S.cfg.custom || []).filter(c => c.kind === kind).map(c => Object.assign({}, c, { group: c.kind === 'radio' ? 'Mi radio' : 'Mis canales', mine: true }));
+}
+
+/* =====================================================================
    Diagnóstico de canales
    ===================================================================== */
 async function runDiagnosis(list){
@@ -2843,7 +2976,7 @@ async function runDiagnosis(list){
       const [it, i] = queue.shift();
       const r = await probe(it, true).catch(() => ({ why: 'down' }));
       res[i] = r; done++;
-      S.health[it.url] = { ok: r.why === 'ok', why: r.why, code: r.code, t: Date.now() };
+      S.health[it.url] = { ok: r.why === 'ok', why: r.why, code: r.code, alt: r.alt, t: Date.now() };
       draw();
     }
   };
@@ -2852,7 +2985,7 @@ async function runDiagnosis(list){
   store.set('health', S.health);
   const btn = md.querySelector('#dgCopy'); btn.disabled = false;
   const report = `Diagnóstico MiTV ${APP_VERSION} · ${deviceName()} · ${new Date().toLocaleString('es-CR')}\n` +
-    items.map((it, i) => `${res[i].why === 'ok' ? 'OK ' : 'XX '} ${it.name} | ${res[i].why}${res[i].code ? ' ' + res[i].code : ''} | ${it.url}`).join('\n');
+    items.map((it, i) => `${res[i].why === 'ok' ? 'OK ' : 'XX '} ${it.name} | ${res[i].why}${res[i].code ? ' ' + res[i].code : ''}${res[i].alt ? ' (enlace alterno)' : ''} | ${res[i].alt || it.url}`).join('\n');
   btn.onclick = async () => {
     try { await navigator.clipboard.writeText(report); toast('Informe copiado'); }
     catch(e){ md.querySelector('#dgList').innerHTML = `<textarea style="width:100%;height:200px;font-size:11px" readonly>${esc(report)}</textarea>`; toast('Selecciónalo y cópialo'); }
@@ -2883,6 +3016,12 @@ function ajustesExtra(target){
   <div class="box"><h3>Recordatorios</h3><div id="remList"></div></div>
 
   <div class="box"><h3>⏺ Grabaciones</h3><div id="recBox"></div></div>
+
+  <div class="box"><h3>Mis canales y radios</h3>
+    <p class="muted" style="margin-top:0">Agrega cualquier transmisión que encuentres, por ejemplo el enlace “en vivo” de la página oficial de un canal o una radio. Los canales aparecen en <b>En vivo → Costa Rica</b> y las radios en <b>Radio → Mis radios</b>.</p>
+    <form id="fCustom" class="row"><div class="field" style="max-width:200px"><input id="cuName" placeholder="Nombre" required></div><div class="field"><input id="cuUrl" type="url" placeholder="Enlace (.m3u8, .mp3, etc.)" required></div>
+      <div class="field" style="max-width:130px"><select id="cuKind"><option value="tv">Canal de TV</option><option value="radio">Radio</option></select></div><button class="btn">Agregar</button></form>
+    <div id="cuList"></div></div>
 
   <div class="box"><h3>Canales de YouTube</h3>
     <p class="muted" style="margin-top:0">Pega el enlace de un canal (con su ID que empieza con UC), una lista de reproducción o un video en vivo.</p>
@@ -2920,15 +3059,26 @@ function ajustesExtra(target){
   const yl = $('#ytList');
   yl.innerHTML = (S.cfg.yt || []).map((y, i) => `<div class="list-item"><div class="grow"><b>▶ ${esc(y.name)}</b><small>${esc(y.type)} · ${esc(y.id)}</small></div><button class="btn danger small" data-yt="${i}">Quitar</button></div>`).join('');
   yl.onclick = e => { const b = e.target.closest('[data-yt]'); if (!b) return; S.cfg.yt.splice(+b.dataset.yt, 1); saveCfg(); render(); };
-  $('#fYt').onsubmit = e => {
+  $('#fYt').onsubmit = async e => {
     e.preventDefault();
     try {
-      const p = parseYt($('#ytUrl').value);
+      let p;
+      try { p = parseYt($('#ytUrl').value); }
+      catch(err){
+        const h = $('#ytUrl').value.match(/(@[\w.-]+)/);
+        if (!h || !android) throw err;
+        toast('Buscando el canal…');
+        p = { type: 'uploads', id: await resolveYtPath(h[1]) };
+      }
       if ($('#ytLive').checked && p.type === 'uploads') p.type = 'live';
       S.cfg.yt = [...(S.cfg.yt || []), { name: $('#ytName').value.trim(), type: p.type, id: p.id }]; saveCfg(); toast('Agregado'); render();
     } catch(err){ toast(err.message); }
   };
   cloudBox($('#cloudBox'));
+  const cl = $('#cuList');
+  cl.innerHTML = (S.cfg.custom || []).map((c, i) => `<div class="list-item"><div class="grow"><b>${c.kind === 'radio' ? '📻' : '📺'} ${esc(c.name)}</b><small>${esc(c.url)}</small></div><button class="btn danger small" data-cu="${i}">Quitar</button></div>`).join('');
+  cl.onclick = e => { const b = e.target.closest('[data-cu]'); if (!b) return; S.cfg.custom.splice(+b.dataset.cu, 1); saveCfg(); S.cache = {}; render(); };
+  $('#fCustom').onsubmit = e => { e.preventDefault(); addCustom($('#cuName').value.trim(), $('#cuUrl').value.trim(), $('#cuKind').value); render(); };
   target.querySelectorAll('[data-lim]').forEach(inp => inp.onchange = async () => {
     if (!(await requirePin('PIN para cambiar el tiempo de pantalla'))){ render(); return; }
     const p = S.profiles.find(x => x.id === inp.dataset.lim); p.limitMin = Math.max(0, +inp.value || 0); store.set('profiles', S.profiles); toast('Guardado');
