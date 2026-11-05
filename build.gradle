@@ -1,3 +1,47 @@
 plugins {
-    id 'com.android.application' version '8.5.2' apply false
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.mitv.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.mitv.app'
+        minSdk 24
+        targetSdk 34
+        versionCode 6
+        versionName "3.3"
+    }
+
+    signingConfigs {
+        release {
+            // El archivo de firma lo crea el flujo de GitHub a partir del secreto MITV_KEYSTORE
+            storeFile file('mitv.jks')
+            storePassword System.getenv('MITV_STORE_PASS') ?: 'mitvfirma2026'
+            keyAlias 'mitv'
+            keyPassword System.getenv('MITV_STORE_PASS') ?: 'mitvfirma2026'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
 }
