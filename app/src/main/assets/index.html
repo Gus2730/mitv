@@ -179,6 +179,12 @@ html.tv aside{top:54px;max-height:calc(100vh - 54px)}
 html.tv .card:hover{transform:none}
 html.tv .card:focus,html.tv .hero:focus,html.tv aside button:focus,html.tv nav button:focus,html.tv .chip:focus,html.tv .btn:focus,html.tv .prog:focus,html.tv .guide-ch:focus,html.tv .pbar button:focus,html.tv .menu button:focus,html.tv .iconbtn:focus,html.tv .avatar:focus{outline:4px solid var(--accent);outline-offset:2px}
 html.tv .card:focus{border-color:var(--accent);background:var(--panel2)}
+html.tv :focus{outline:4px solid var(--accent) !important;outline-offset:2px}
+html.tv #video:focus,html.tv .modal:focus{outline:none !important}
+html.tv label:focus-within{outline:4px solid var(--accent);outline-offset:2px;border-radius:10px}
+html.tv input[type=checkbox]{width:22px;height:22px}
+html.tv select{min-height:40px}
+.pickopt{display:block;width:100%;margin:6px 0;text-align:left}
 html.tv .dot.ok{box-shadow:none}
 html.tv #video:focus{outline:none}
 html.tv .spinner{animation-duration:1.4s}
@@ -1183,8 +1189,8 @@ function viewMulti(){
     </div>
     <div class="mv l${n}" id="mv">${Array.from({ length: n }, (_, i) => `
       <div class="slot ${M.audio === i ? 'audio' : ''}" data-s="${i}">
-        ${M.slots[i] ? `<video muted playsinline autoplay></video><button class="sel" data-sel="${i}" aria-label="Escuchar ${esc(M.slots[i].name)}"></button>` : '<span class="empty-slot">Vacío</span>'}
-        <div class="lbl">${M.slots[i] ? `<span>${M.audio === i ? '🔊 ' : ''}${esc(M.slots[i].name)}</span>` : ''}<button class="btn small" data-pick="${i}">${M.slots[i] ? 'Cambiar' : '+ Elegir canal'}</button></div>
+        ${M.slots[i] ? `<video muted playsinline autoplay></video><button class="sel" data-sel="${i}" tabindex="-1" aria-hidden="true"></button>` : '<span class="empty-slot">Vacío</span>'}
+        <div class="lbl">${M.slots[i] ? `<span>${M.audio === i ? '🔊 ' : ''}${esc(M.slots[i].name)}</span><button class="btn ghost small" data-sel="${i}">${M.audio === i ? '🔊 Sonando' : '🔈 Escuchar'}</button>` : ''}<button class="btn small" data-pick="${i}">${M.slots[i] ? 'Cambiar' : '+ Elegir canal'}</button></div>
       </div>`).join('')}</div>`;
   content.querySelector('.toolbar').onclick = e => {
     const b = e.target.closest('[data-l]'); if (!b) return;
@@ -1214,6 +1220,7 @@ function applyAudio(){
   content.querySelectorAll('.slot').forEach((s, i) => {
     s.classList.toggle('audio', i === M.audio);
     const sp = s.querySelector('.lbl span'); if (sp && M.slots[i]) sp.textContent = (i === M.audio ? '🔊 ' : '') + M.slots[i].name;
+    const lb = s.querySelector('.lbl [data-sel]'); if (lb) lb.textContent = i === M.audio ? '🔊 Sonando' : '🔈 Escuchar';
   });
 }
 function pickChannel(slot){
@@ -1666,7 +1673,10 @@ async function play(items, index){
     if (video.currentTime !== lastT){ lastT = video.currentTime; lastProgress = Date.now(); return; }
     if (Date.now() - lastProgress > 12000 && video.readyState > 0){ lastProgress = Date.now(); reconnect(); }
   }, 3000);
-  if (IS_TV){ video.tabIndex = 0; video.focus({ preventScroll: true }); } else $('#pClose').focus();
+  if (IS_TV){
+    video.tabIndex = 0; video.focus({ preventScroll: true });
+    if (!store.get('tvHint', false)){ store.set('tvHint', true); setTimeout(() => toast('Control: ▲▼ cambiar canal · ◀▶ atrasar/adelantar · OK mostrar botones · Atrás salir'), 1500); }
+  } else $('#pClose').focus();
   poke();
 }
 
@@ -1822,7 +1832,7 @@ function zapDigit(d){
    ===================================================================== */
 const BACK_KEYS = new Set(['Escape','Backspace','GoBack','BrowserBack']);
 const BACK_CODES = new Set([10009, 461, 27]);
-function focusables(){
+function focusables(limit = true){
   const root = modals.length ? modals[modals.length - 1].el : player.classList.contains('open') ? player : document;
   const vh = innerHeight, out = [];
   for (const el of root.querySelectorAll('button, input, select, textarea, a[href], video')){
@@ -1830,13 +1840,13 @@ function focusables(){
     if (root === document && player.contains(el)) continue;
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height) continue;
-    if (r.bottom < -vh * 1.5 || r.top > vh * 2.5) continue; // muy lejos de la pantalla: no hace falta medirlo
+    if (limit && (r.bottom < -vh * 1.5 || r.top > vh * 2.5)) continue; // muy lejos de la pantalla: no hace falta medirlo
     el._r = r; out.push(el);
   }
   return out;
 }
-function moveFocus(dir){
-  const cur = document.activeElement, all = focusables();
+function moveFocus(dir, wide){
+  const cur = document.activeElement, all = focusables(!wide);
   if (!cur || cur === document.body || !all.includes(cur)){ (all.find(e => e.matches('.card')) || all[0])?.focus(); return; }
   const a = cur.getBoundingClientRect(), ax = a.left + a.width/2, ay = a.top + a.height/2;
   let best = null, bestScore = Infinity;
@@ -1853,8 +1863,29 @@ function moveFocus(dir){
     if (score < bestScore){ bestScore = score; best = el; }
   }
   if (best){ best.focus({ preventScroll: true }); best.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+  else if (!wide) moveFocus(dir, true); // el siguiente control está lejos: buscarlo en toda la página
 }
 let lastMove = 0;
+// Listas desplegables en TV: OK abre una lista grande para elegir con el control
+function openSelectPicker(sel){
+  const label = (sel.closest('.field') && sel.closest('.field').querySelector('label')) ? sel.closest('.field').querySelector('label').textContent : 'Elegir una opción';
+  const md = openModal(`<h3>${esc(label)}</h3>` + [...sel.options].map((o, i) => `<button class="btn ${o.selected ? '' : 'ghost'} pickopt" data-o="${i}" ${o.selected ? 'autofocus' : ''}>${o.selected ? '✓ ' : ''}${esc(o.text)}</button>`).join(''));
+  md.onclick = e => {
+    const b = e.target.closest('[data-o]'); if (!b) return;
+    sel.selectedIndex = +b.dataset.o;
+    closeModal();
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    sel.focus();
+  };
+}
+// ¿El cursor de texto está en el borde? (para poder salir del campo con ◀ ▶)
+function atTextEdge(el, dir){
+  let st = null, en = null;
+  try { st = el.selectionStart; en = el.selectionEnd; } catch(e){}
+  if (st === null || st === undefined) return true; // campos sin cursor (número, correo…)
+  const len = (el.value || '').length;
+  return dir === 'ArrowLeft' ? (st === 0 && en === 0) : (st === len && en === len);
+}
 function seekBy(sec){
   const s = video.seekable, b = video.buffered;
   let min = 0, max = video.duration;
@@ -1899,11 +1930,18 @@ document.addEventListener('keydown', e => {
   if (open && !modals.length && document.activeElement === video && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && !isVod(S.current.items[S.current.index])){
     e.preventDefault(); step(e.key === 'ArrowUp' ? -1 : 1); return;
   }
+  // OK del control sobre una casilla: activarla o desactivarla
+  if (e.key === 'Enter' && e.target.matches && e.target.matches('input[type=checkbox], input[type=radio]')){ e.preventDefault(); e.target.click(); return; }
+  // OK sobre una lista desplegable en TV: abrir la lista grande
+  if (e.key === 'Enter' && LITE && e.target.tagName === 'SELECT'){ e.preventDefault(); openSelectPicker(e.target); return; }
   if (e.key.startsWith('Arrow')){
     // Si se mantiene presionada la flecha, no acumular movimientos
     if (e.repeat && Date.now() - lastMove < (IS_TV ? 110 : 45)){ e.preventDefault(); return; }
     lastMove = Date.now();
-    if (typing && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA')) return;
+    const tag = e.target.tagName, side = e.key === 'ArrowLeft' || e.key === 'ArrowRight';
+    if (tag === 'SELECT' && !LITE) return;                      // computadora: las flechas cambian la opción
+    if (tag === 'TEXTAREA' && !(side && atTextEdge(e.target, e.key))) return;
+    if (tag === 'INPUT' && typing && side && !atTextEdge(e.target, e.key)) return; // mover el cursor dentro del texto
     if (open && document.activeElement === video && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) return;
     e.preventDefault(); moveFocus(e.key);
   }
@@ -1912,7 +1950,7 @@ document.addEventListener('keydown', e => {
 /* =====================================================================
    MiTV 3 · Versión, actualizaciones y pantalla de carga
    ===================================================================== */
-const APP_VERSION = '3.3';
+const APP_VERSION = '3.4';
 const BUILT_HOME = '__MITV_HOME__';
 function homeUrl(){
   if (S.cfg.homeUrl) return S.cfg.homeUrl.replace(/\/?$/, '/');
