@@ -43,6 +43,13 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".PlayerActivity"
+            android:exported="false"
+            android:theme="@style/PlayerTheme"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode"
+            android:screenOrientation="sensorLandscape" />
+
         <receiver android:name=".ReminderReceiver" android:exported="false" />
     </application>
 </manifest>
