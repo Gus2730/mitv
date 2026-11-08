@@ -10,8 +10,8 @@ android {
         applicationId 'com.mitv.app'
         minSdk 24
         targetSdk 34
-        versionCode 7
-        versionName "3.4"
+        versionCode 8
+        versionName "3.5"
     }
 
     signingConfigs {
@@ -44,4 +44,8 @@ android {
 
 dependencies {
     implementation 'androidx.webkit:webkit:1.11.0'
+    // Reproductor nativo de video (Google ExoPlayer / Media3)
+    implementation 'androidx.media3:media3-exoplayer:1.4.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.4.1'
+    implementation 'androidx.media3:media3-ui:1.4.1'
 }
