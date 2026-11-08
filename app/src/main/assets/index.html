@@ -4,10 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b0f17">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <title>MiTV</title>
 <style>
 :root{
@@ -2031,7 +2027,7 @@ document.addEventListener('keydown', e => {
 /* =====================================================================
    MiTV 3 · Versión, actualizaciones y pantalla de carga
    ===================================================================== */
-const APP_VERSION = '3.5';
+const APP_VERSION = '3.6';
 const BUILT_HOME = '__MITV_HOME__';
 function homeUrl(){
   if (S.cfg.homeUrl) return S.cfg.homeUrl.replace(/\/?$/, '/');
@@ -2584,7 +2580,7 @@ async function rbGet(path){
 }
 const RADIO_TAG = { cr: 'costa rica', mx: 'mexico', gt: 'guatemala', sv: 'el salvador', hn: 'honduras', ni: 'nicaragua', pa: 'panama', co: 'colombia', ve: 'venezuela', ec: 'ecuador', pe: 'peru', bo: 'bolivia', cl: 'chile', ar: 'argentina', uy: 'uruguay', py: 'paraguay', do: 'republica dominicana', cu: 'cuba', pr: 'puerto rico' };
 async function radioStations(cc){
-  const key = 'rb:' + cc;
+  const key = 'rb2:' + cc;
   if (S.cache[key]) return S.cache[key];
   const c = store.get('c:' + key, null);
   let raw;
@@ -2592,15 +2588,29 @@ async function radioStations(cc){
   else {
     const CC = cc.toUpperCase(), tag = RADIO_TAG[cc];
     // Además del país, buscar emisoras etiquetadas con el nombre del país
-    const reqs = [rbGet(`/json/stations/bycountrycodeexact/${CC}?hidebroken=true&order=clickcount&reverse=true&limit=500`)];
-    if (tag) reqs.push(rbGet(`/json/stations/search?tag=${encodeURIComponent(tag)}&hidebroken=true&order=clickcount&reverse=true&limit=300`).then(l => l.filter(s => !s.countrycode || s.countrycode === CC)).catch(() => []));
-    raw = (await Promise.all(reqs)).flat();
-    store.set('c:' + key, { t: Date.now(), v: raw.map(s => ({ name: s.name, url_resolved: s.url_resolved || s.url, favicon: s.favicon, tags: s.tags, stationuuid: s.stationuuid, codec: s.codec, bitrate: s.bitrate })) });
+    const reqs = [rbGet(`/json/stations/bycountrycodeexact/${CC}?order=clickcount&reverse=true&limit=1000`)];
+    if (tag) reqs.push(rbGet(`/json/stations/search?tag=${encodeURIComponent(tag)}&order=clickcount&reverse=true&limit=500`).then(l => l.filter(s => !s.countrycode || s.countrycode === CC)).catch(() => []));
+    raw = (await Promise.all(reqs)).flat().map(s => ({ name: s.name, url_resolved: s.url_resolved || s.url, favicon: s.favicon, tags: s.tags, stationuuid: s.stationuuid, ok: s.lastcheckok === 0 ? 0 : 1 }));
+    store.set('c:' + key, { t: Date.now(), v: raw });
   }
   const seen = new Set();
   const nk = s => normName(s.name) || s.name.trim().toLowerCase();
-  return (S.cache[key] = raw.filter(s => s.url_resolved && s.name && !seen.has(nk(s)) && seen.add(nk(s)))
-    .map(s => ({ name: s.name.trim(), url: s.url_resolved, logo: s.favicon || '', group: (s.tags || '').split(',').filter(Boolean).slice(0, 2).join(' · ') || 'Radio', id: 'rb:' + s.stationuuid, kind: 'radio' })));
+  // Primero las que funcionaban en la última revisión; si una emisora aparece dos veces, se queda la que funciona
+  const sorted = raw.filter(s => s.url_resolved && s.name).sort((a, b) => (b.ok ?? 1) - (a.ok ?? 1));
+  return (S.cache[key] = sorted.filter(s => !seen.has(nk(s)) && seen.add(nk(s))).map(rbItem));
+}
+function rbItem(s){
+  const tags = (s.tags || '').split(',').filter(Boolean).slice(0, 2).join(' · ');
+  const where = s.country && s.countrycode !== 'CR' ? s.country : '';
+  return { name: s.name.trim(), url: s.url_resolved || s.url, logo: s.favicon || '', id: 'rb:' + s.stationuuid, kind: 'radio',
+    group: [where, tags || 'Radio'].filter(Boolean).join(' · ') + ((s.ok ?? (s.lastcheckok === 0 ? 0 : 1)) === 0 ? ' · puede fallar' : '') };
+}
+// Buscar cualquier emisora del directorio por nombre o frecuencia
+async function radioSearch(q, cc){
+  const l = await rbGet(`/json/stations/search?name=${encodeURIComponent(q)}&order=clickcount&reverse=true&limit=120`);
+  const CC = (cc || 'cr').toUpperCase(), seen = new Set();
+  return l.filter(s => s.url_resolved || s.url).sort((a, b) => ((b.countrycode === CC) - (a.countrycode === CC)) || ((b.lastcheckok || 0) - (a.lastcheckok || 0)))
+    .filter(s => { const k = normName(s.name) + '|' + s.countrycode; return !seen.has(k) && seen.add(k); }).map(rbItem);
 }
 function viewRadio(){
   side.style.display = '';
@@ -2618,8 +2628,24 @@ function viewRadio(){
     return renderGrid($('#g'), [...mine, ...P.favs.filter(f => f.kind === 'radio' && !mine.some(m => m.url === f.url))], 'Todavía no tienes radios favoritas.', { live: false });
   }
   const c = COUNTRIES.find(x => x[0] === v) || COUNTRIES[0];
-  content.innerHTML = `<h2>📻 Radios de ${c[2]} ${esc(c[1])}</h2><p class="sub">Emisoras que transmiten por internet, ordenadas por popularidad. Usa el buscador para encontrar la tuya.</p><div id="g"></div>`;
-  withLoading($('#g'), async () => renderGrid($('#g'), await radioStations(c[0]), 'No se encontraron radios.', { live: false }));
+  content.innerHTML = `<h2>📻 Radios de ${c[2]} ${esc(c[1])}</h2>
+    <p class="sub">Emisoras que transmiten por internet, ordenadas por popularidad. Las marcadas con “puede fallar” no respondieron en la última revisión del directorio.</p>
+    <form id="fRq" class="row"><div class="field" style="margin:0"><input id="rq" placeholder="¿No está tu emisora? Búscala por nombre o frecuencia (ej. Columbia, 98.7)" value="${esc(S.radioQ || '')}"></div><button class="btn">Buscar</button>${S.radioQ ? '<button type="button" class="btn ghost" id="rqClr">Ver todas</button>' : ''}</form>
+    <p class="muted" id="rqInfo" style="font-size:13px"></p><div id="g"></div>`;
+  $('#fRq').onsubmit = e => { e.preventDefault(); S.radioQ = $('#rq').value.trim(); render(); };
+  if ($('#rqClr')) $('#rqClr').onclick = () => { S.radioQ = ''; render(); };
+  if (S.radioQ){
+    return withLoading($('#g'), async () => {
+      const r = await radioSearch(S.radioQ, c[0]);
+      $('#rqInfo').textContent = r.length ? `${r.length} emisoras encontradas para “${S.radioQ}” (primero las de ${c[1]}). Márcalas con ☆ para tenerlas en Mis radios.` : '';
+      renderGrid($('#g'), r, `No se encontró “${esc(S.radioQ)}”. Si conoces el enlace de transmisión, agrégala en Mis radios.`, { live: false });
+    });
+  }
+  withLoading($('#g'), async () => {
+    const l = await radioStations(c[0]);
+    $('#rqInfo').textContent = `${l.length} emisoras · ${l.filter(i => !/puede fallar/.test(i.group)).length} respondieron en la última revisión.`;
+    renderGrid($('#g'), l, 'No se encontraron radios.', { live: false });
+  });
 }
 /* Podcasts: búsqueda en el directorio público de Apple (JSONP) y lectura del RSS */
 function itunesSearch(term){

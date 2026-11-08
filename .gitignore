@@ -1,0 +1,5 @@
+app/mitv.jks
+*.jks
+build/
+.gradle/
+local.properties
