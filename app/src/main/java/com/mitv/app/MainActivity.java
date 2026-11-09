@@ -130,6 +130,10 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void setBackgroundAudio(boolean on) { bgAudio = on; }
 
+        /** Cerrar la app (después de que el usuario confirma en la pantalla de Inicio) */
+        @JavascriptInterface
+        public void exitApp() { runOnUiThread(MainActivity.this::finish); }
+
         /** Abre el reproductor nativo (ExoPlayer) con la lista de canales en vivo */
         @JavascriptInterface
         public void playNative(String json) {
