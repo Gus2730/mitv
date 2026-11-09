@@ -1,22 +1,32 @@
 package com.mitv.app;
 
 import android.app.Activity;
+import android.app.PictureInPictureParams;
+import android.app.UiModeManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.util.Rational;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.media3.common.C;
@@ -38,17 +48,23 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Reproductor nativo de MiTV para canales en vivo (más fluido que el de la página web en TV).
- * Control remoto: ▲▼ canal, ◀▶ atrasar/adelantar, OK información, números para ir a un canal, Atrás para volver.
+ * Reproductor nativo de MiTV para canales en vivo.
+ * Control remoto: ▲▼ canal, ◀▶ atrasar/adelantar, OK o Menú lista de canales, Info banner,
+ * números para ir a un canal, Atrás para cerrar la lista o volver.
+ * Teléfono: tocar muestra los botones, deslizar arriba/abajo cambia de canal,
+ * deslizar hacia la izquierda abre la lista. Al salir de la app sigue en una ventana flotante.
  */
 public class PlayerActivity extends Activity {
 
     public static final String EXTRA_DATA = "data";
+    private static final String ACCENT = "#2FD18B";
 
     private ExoPlayer player;
     private PlayerView view;
-    private TextView osdNum, osdName, osdNow, msg, zap;
-    private LinearLayout osd;
+    private TextView osdNum, osdName, osdNow, msg, zap, listTitle;
+    private LinearLayout osd, controls, listPanel;
+    private ListView list;
+    private ArrayAdapter<String> adapter;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     private JSONArray items;
@@ -56,12 +72,16 @@ public class PlayerActivity extends Activity {
     private int altIndex;          // -1 = enlace principal; 0..n = enlaces alternos
     private long startedAt;
     private String zapBuffer = "";
+    private boolean tv;
+    private boolean inPip;
+    private boolean pipUsed;       // se usó la ventana flotante en esta sesión
 
     // Lo que se vio, para avisar a la app web al salir
     private final Map<Integer, Long> watched = new HashMap<>();
     private final List<Integer> failed = new ArrayList<>();
 
     private final Runnable hideOsd = () -> osd.setVisibility(View.GONE);
+    private final Runnable hideControls = () -> controls.setVisibility(View.GONE);
     private final Runnable doZap = this::finishZap;
 
     @Override
@@ -78,6 +98,7 @@ public class PlayerActivity extends Activity {
             return;
         }
         if (items.length() == 0) { finish(); return; }
+        tv = detectTv();
 
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
@@ -91,11 +112,8 @@ public class PlayerActivity extends Activity {
         osd.setOrientation(LinearLayout.HORIZONTAL);
         osd.setGravity(Gravity.CENTER_VERTICAL);
         osd.setPadding(dp(18), dp(12), dp(22), dp(12));
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(Color.parseColor("#E60B0F17"));
-        bg.setCornerRadius(dp(14));
-        osd.setBackground(bg);
-        osdNum = text(30, "#2FD18B", true);
+        osd.setBackground(rounded("#E60B0F17", 14));
+        osdNum = text(30, ACCENT, true);
         osdNum.setPadding(0, 0, dp(16), 0);
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
@@ -106,30 +124,111 @@ public class PlayerActivity extends Activity {
         osd.addView(osdNum);
         osd.addView(col);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
-        lp.setMargins(dp(32), 0, 0, dp(40));
+        lp.setMargins(dp(32), 0, 0, dp(tv ? 40 : 110));
         root.addView(osd, lp);
 
         // Mensajes (cargando, error)
         msg = text(18, "#E8EDF6", false);
         msg.setGravity(Gravity.CENTER);
         msg.setPadding(dp(24), dp(18), dp(24), dp(18));
-        GradientDrawable mbg = new GradientDrawable();
-        mbg.setColor(Color.parseColor("#E60B0F17"));
-        mbg.setCornerRadius(dp(14));
-        msg.setBackground(mbg);
+        msg.setBackground(rounded("#E60B0F17", 14));
         root.addView(msg, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
 
         // Número que se está marcando
         zap = text(56, "#FFFFFF", true);
         zap.setPadding(dp(22), dp(6), dp(22), dp(6));
-        zap.setBackground(mbg.getConstantState().newDrawable());
+        zap.setBackground(rounded("#E60B0F17", 14));
         zap.setVisibility(View.GONE);
         FrameLayout.LayoutParams zp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
         zp.setMargins(0, dp(28), dp(36), 0);
         root.addView(zap, zp);
 
+        // Botones táctiles (abajo)
+        controls = new LinearLayout(this);
+        controls.setOrientation(LinearLayout.HORIZONTAL);
+        controls.setGravity(Gravity.CENTER);
+        controls.setPadding(dp(12), dp(10), dp(12), dp(10));
+        controls.setBackground(rounded("#D90B0F17", 18));
+        controls.addView(button("✕  Volver", v -> finish()));
+        controls.addView(button("▲  Anterior", v -> { step(-1); showControls(); }));
+        controls.addView(button("▼  Siguiente", v -> { step(1); showControls(); }));
+        controls.addView(button("☰  Canales", v -> openList()));
+        if (pipSupported()) controls.addView(button("⧉  Ventana", v -> enterPip()));
+        controls.setVisibility(View.GONE);
+        FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        cp.setMargins(dp(12), 0, dp(12), dp(24));
+        root.addView(controls, cp);
+
+        // Lista de canales (panel a la derecha)
+        listPanel = new LinearLayout(this);
+        listPanel.setOrientation(LinearLayout.VERTICAL);
+        listPanel.setBackgroundColor(Color.parseColor("#F00B0F17"));
+        listPanel.setPadding(dp(8), dp(16), dp(8), dp(8));
+        listTitle = text(20, "#FFFFFF", true);
+        listTitle.setText("Canales");
+        listTitle.setPadding(dp(14), 0, dp(14), dp(10));
+        listPanel.addView(listTitle);
+        list = new ListView(this);
+        list.setDivider(null);
+        list.setSelector(rounded("#332FD18B", 12));
+        list.setDrawSelectorOnTop(false);
+        list.setFocusable(true);
+        list.setVerticalScrollBarEnabled(true);
+        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, labels()) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView t = (TextView) super.getView(position, convertView, parent);
+                t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                t.setPadding(dp(14), dp(10), dp(14), dp(10));
+                t.setMaxLines(2);
+                boolean on = position == index;
+                t.setTextColor(Color.parseColor(on ? ACCENT : "#E8EDF6"));
+                t.setTypeface(null, on ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+                return t;
+            }
+        };
+        list.setAdapter(adapter);
+        list.setOnItemClickListener((parent, v, pos, id) -> {
+            hideList();
+            if (pos != index) {
+                index = pos;
+                playCurrent();
+            }
+        });
+        listPanel.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        listPanel.setVisibility(View.GONE);
+        root.addView(listPanel, new FrameLayout.LayoutParams(dp(tv ? 420 : 320), ViewGroup.LayoutParams.MATCH_PARENT, Gravity.END));
+
         setContentView(root);
         root.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+
+        // Gestos: tocar = botones, deslizar arriba/abajo = canal, deslizar a la izquierda = lista
+        final GestureDetector gestures = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) { return true; }
+
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent e) {
+                if (listPanel.getVisibility() == View.VISIBLE) { hideList(); return true; }
+                if (controls.getVisibility() == View.VISIBLE) controls.setVisibility(View.GONE);
+                else { showControls(); showOsd(); }
+                return true;
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float vx, float vy) {
+                if (e1 == null || e2 == null) return false;
+                float dx = e2.getX() - e1.getX(), dy = e2.getY() - e1.getY();
+                if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > dp(60)) {
+                    step(dy < 0 ? 1 : -1);
+                    return true;
+                }
+                if (dx < -dp(80) && Math.abs(dx) > Math.abs(dy)) { openList(); return true; }
+                if (dx > dp(80) && listPanel.getVisibility() == View.VISIBLE) { hideList(); return true; }
+                return false;
+            }
+        });
+        view.setOnTouchListener((v, e) -> gestures.onTouchEvent(e));
 
         player = new ExoPlayer.Builder(this).build();
         player.setPlayWhenReady(true);
@@ -146,11 +245,35 @@ public class PlayerActivity extends Activity {
                 // Probar el siguiente enlace de respaldo; si no hay, avisar
                 if (tryNextAlt()) return;
                 if (!failed.contains(index)) failed.add(index);
-                showMsg("Este canal no está disponible ahora.\nCambia de canal con ▲ ▼ o presiona Atrás.");
+                showMsg(tv ? "Este canal no está disponible ahora.\nCambia con ▲ ▼, abre la lista con OK o presiona Atrás."
+                           : "Este canal no está disponible ahora.\nDesliza arriba o abajo para cambiar, o toca para ver los botones.");
             }
         });
 
         playCurrent();
+        if (!tv) showControls();
+    }
+
+    private boolean detectTv() {
+        try {
+            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)) return true;
+            UiModeManager ui = (UiModeManager) getSystemService(UI_MODE_SERVICE);
+            return ui != null && ui.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean pipSupported() {
+        return !tv && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
+    }
+
+    private GradientDrawable rounded(String color, int radiusDp) {
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.parseColor(color));
+        g.setCornerRadius(dp(radiusDp));
+        return g;
     }
 
     private TextView text(int sp, String color, boolean bold) {
@@ -162,13 +285,66 @@ public class PlayerActivity extends Activity {
         return t;
     }
 
+    private TextView button(String label, View.OnClickListener click) {
+        TextView b = text(15, "#FFFFFF", true);
+        b.setText(label);
+        b.setMaxLines(1);
+        b.setGravity(Gravity.CENTER);
+        b.setMinHeight(dp(48));
+        b.setPadding(dp(14), dp(8), dp(14), dp(8));
+        b.setBackground(rounded("#26FFFFFF", 12));
+        b.setClickable(true);
+        b.setFocusable(false);
+        b.setOnClickListener(click);
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        p.setMargins(dp(4), 0, dp(4), 0);
+        b.setLayoutParams(p);
+        return b;
+    }
+
     private int dp(int v) {
         return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, getResources().getDisplayMetrics()));
     }
 
+    private List<String> labels() {
+        List<String> out = new ArrayList<>();
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject it = items.optJSONObject(i);
+            if (it == null) { out.add(String.valueOf(i + 1)); continue; }
+            String s = it.optInt("num", i + 1) + "   " + it.optString("name");
+            String now = it.optString("now", "");
+            if (!now.isEmpty()) s += "\n      " + now;
+            out.add(s);
+        }
+        return out;
+    }
+
     private void showMsg(String s) {
         msg.setText(s);
-        msg.setVisibility(View.VISIBLE);
+        msg.setVisibility(inPip ? View.GONE : View.VISIBLE);
+    }
+
+    private void showControls() {
+        if (inPip) return;
+        controls.setVisibility(View.VISIBLE);
+        handler.removeCallbacks(hideControls);
+        handler.postDelayed(hideControls, 5000);
+    }
+
+    private void openList() {
+        if (inPip) return;
+        controls.setVisibility(View.GONE);
+        listTitle.setText("Canales  ·  " + items.length());
+        adapter.notifyDataSetChanged();
+        listPanel.setVisibility(View.VISIBLE);
+        list.requestFocus();
+        list.setSelection(Math.max(0, index - 3));
+        list.post(() -> list.setSelection(index));
+    }
+
+    private void hideList() {
+        listPanel.setVisibility(View.GONE);
+        view.requestFocus();
     }
 
     private JSONObject cur() {
@@ -188,6 +364,7 @@ public class PlayerActivity extends Activity {
         altIndex = -1;
         load(cur().optString("url"));
         showOsd();
+        if (adapter != null) adapter.notifyDataSetChanged();
     }
 
     private void load(String url) {
@@ -233,6 +410,7 @@ public class PlayerActivity extends Activity {
     }
 
     private void showOsd() {
+        if (inPip) return;
         JSONObject it = cur();
         osdNum.setText(String.valueOf(it.optInt("num", index + 1)));
         osdName.setText(it.optString("name"));
@@ -266,8 +444,67 @@ public class PlayerActivity extends Activity {
         zapBuffer = "";
     }
 
+    // ---------- Ventana flotante (PiP) al salir de la app en el teléfono ----------
+
+    private void enterPip() {
+        if (!pipSupported()) return;
+        try {
+            enterPictureInPictureMode(new PictureInPictureParams.Builder()
+                    .setAspectRatio(new Rational(16, 9))
+                    .build());
+        } catch (Exception ignored) { }
+    }
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        if (player != null && player.getPlayWhenReady()) enterPip();
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPip, Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPip, newConfig);
+        inPip = isInPip;
+        if (isInPip) {
+            pipUsed = true;
+            handler.removeCallbacks(hideOsd);
+            osd.setVisibility(View.GONE);
+            controls.setVisibility(View.GONE);
+            listPanel.setVisibility(View.GONE);
+            msg.setVisibility(View.GONE);
+            zap.setVisibility(View.GONE);
+        } else {
+            showOsd();
+        }
+    }
+
+    // ---------- Control remoto ----------
+
+    @Override
+    public void onBackPressed() {
+        if (listPanel.getVisibility() == View.VISIBLE) { hideList(); return; }
+        if (pipUsed) {
+            // Tras la ventana flotante el reproductor quedó aparte: volver a la app principal
+            try {
+                startActivity(new Intent(this, MainActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
+            } catch (Exception ignored) { }
+        }
+        super.onBackPressed();
+    }
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        boolean listOpen = listPanel.getVisibility() == View.VISIBLE;
+        if (keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_GUIDE) {
+            if (listOpen) hideList(); else openList();
+            return true;
+        }
+        // Con la lista abierta, las flechas y OK las maneja la lista
+        if (listOpen) {
+            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { hideList(); return true; }
+            return super.onKeyDown(keyCode, event);
+        }
         if (keyCode >= KeyEvent.KEYCODE_0 && keyCode <= KeyEvent.KEYCODE_9) {
             zapBuffer = (zapBuffer + (keyCode - KeyEvent.KEYCODE_0));
             if (zapBuffer.length() > 4) zapBuffer = zapBuffer.substring(zapBuffer.length() - 4);
@@ -298,6 +535,8 @@ public class PlayerActivity extends Activity {
                 return true;
             case KeyEvent.KEYCODE_DPAD_CENTER:
             case KeyEvent.KEYCODE_ENTER:
+                if (event.getRepeatCount() == 0) openList();
+                return true;
             case KeyEvent.KEYCODE_INFO:
                 showOsd();
                 return true;
@@ -337,7 +576,10 @@ public class PlayerActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
+        // En ventana flotante sigue sonando; si la cierran, se detiene y se vuelve a la app
         if (player != null) player.pause();
+        // Si cerraron la ventana flotante, terminar el reproductor
+        if (inPip) finish();
     }
 
     @Override

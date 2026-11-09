@@ -47,6 +47,8 @@
             android:name=".PlayerActivity"
             android:exported="false"
             android:theme="@style/PlayerTheme"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode"
             android:screenOrientation="sensorLandscape" />
 

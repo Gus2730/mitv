@@ -2027,7 +2027,7 @@ document.addEventListener('keydown', e => {
 /* =====================================================================
    MiTV 3 · Versión, actualizaciones y pantalla de carga
    ===================================================================== */
-const APP_VERSION = '3.6';
+const APP_VERSION = '3.7';
 const BUILT_HOME = '__MITV_HOME__';
 function homeUrl(){
   if (S.cfg.homeUrl) return S.cfg.homeUrl.replace(/\/?$/, '/');
@@ -3538,7 +3538,7 @@ function ajustesExtra4(target){
   target.innerHTML = `
   ${android && android.playNative ? `<div class="box"><h3>Reproductor de Android</h3>
     <label class="switch"><input type="checkbox" id="natP" ${S.cfg.nativePlayer !== false ? 'checked' : ''}> Usar el reproductor nativo de Android para canales en vivo (más fluido, recomendado en TV)</label>
-    <p class="muted" style="margin:0;font-size:13px">En el reproductor nativo: ▲▼ cambian de canal, ◀▶ atrasan o adelantan, OK muestra la información, los números cambian de canal y Atrás vuelve a MiTV.</p></div>` : ''}
+    <p class="muted" style="margin:0;font-size:13px">En el reproductor nativo: ▲▼ cambian de canal, ◀▶ atrasan o adelantan, OK o Menú abren la lista de canales, los números cambian de canal y Atrás vuelve a MiTV. En el teléfono: toca la pantalla para ver los botones, desliza arriba o abajo para cambiar de canal y desliza a la izquierda para abrir la lista. Al salir de la app, el canal sigue en una ventana flotante.</p></div>` : ''}
   <div class="box"><h3>Clima y protector de pantalla</h3>
     <div class="row"><div class="field" style="max-width:240px"><label>Ciudad</label><select id="cityS">${CITIES.map(c => `<option ${c[0] === city()[0] ? 'selected' : ''}>${esc(c[0])}</option>`).join('')}</select></div>
     <div class="field" style="max-width:240px"><label>Protector de pantalla</label><select id="saverS">${[['0', 'Apagado'], ['2', 'A los 2 minutos'], ['5', 'A los 5 minutos'], ['10', 'A los 10 minutos'], ['15', 'A los 15 minutos']].map(([v, n]) => `<option value="${v}" ${String(S.cfg.saverMin) === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div></div>
