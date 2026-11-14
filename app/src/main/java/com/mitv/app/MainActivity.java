@@ -2,7 +2,16 @@ package com.mitv.app;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.os.Environment;
+import android.provider.Settings;
+import androidx.core.content.FileProvider;
+import java.io.File;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -61,6 +70,8 @@ public class MainActivity extends Activity {
     private View customView;
     private WebChromeClient.CustomViewCallback customViewCallback;
     private volatile boolean playing = false;
+    private long updateId = -1;
+    private BroadcastReceiver updateReceiver;
 
     /** Puente que usa la app web: window.MiTVAndroid */
     public class Bridge {
@@ -134,6 +145,27 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void exitApp() { runOnUiThread(MainActivity.this::finish); }
 
+
+        /** Descarga la versión nueva y abre el instalador de Android (necesita el permiso de “instalar apps desconocidas”) */
+        @JavascriptInterface
+        public void installUpdate(String url) { runOnUiThread(() -> startUpdate(url)); }
+
+        /** Favoritos para el widget de la pantalla de inicio: [{"n":"Nombre","u":"enlace"}] */
+        @JavascriptInterface
+        public void setWidgetFavs(String json) {
+            getSharedPreferences(FavsWidget.PREFS, MODE_PRIVATE).edit().putString("favs", json == null ? "[]" : json).apply();
+            FavsWidget.refresh(MainActivity.this);
+        }
+
+        /** Enlace del canal que se tocó en el widget (se entrega una sola vez) */
+        @JavascriptInterface
+        public String takeLaunchChannel() {
+            String u = getIntent() == null ? null : getIntent().getStringExtra(FavsWidget.EXTRA_URL);
+            if (u == null) return "";
+            getIntent().removeExtra(FavsWidget.EXTRA_URL);
+            return u;
+        }
+
         /** Abre el reproductor nativo (ExoPlayer) con la lista de canales en vivo */
         @JavascriptInterface
         public void playNative(String json) {
@@ -153,6 +185,59 @@ public class MainActivity extends Activity {
         public void setStreamHeaders(String referrer, String userAgent) {
             boolean empty = (referrer == null || referrer.isEmpty()) && (userAgent == null || userAgent.isEmpty());
             streamHeaders = empty ? null : new String[]{referrer, userAgent};
+        }
+    }
+
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        js("window.mitvLaunchCheck&&mitvLaunchCheck()");
+    }
+
+    private void startUpdate(String url) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getPackageManager().canRequestPackageInstalls()) {
+                js("window.mitvUpdateEvent&&mitvUpdateEvent('perm')");
+                startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName())));
+                return;
+            }
+            final File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            final File apk = new File(dir, "MiTV-update.apk");
+            if (apk.exists()) apk.delete();
+            DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+            DownloadManager.Request r = new DownloadManager.Request(Uri.parse(url))
+                    .setTitle("MiTV")
+                    .setDescription("Descargando la actualización")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                    .setDestinationUri(Uri.fromFile(apk));
+            updateId = dm.enqueue(r);
+            if (updateReceiver != null) { try { unregisterReceiver(updateReceiver); } catch (Exception ignored) { } }
+            updateReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context c, Intent i) {
+                    if (i.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) != updateId) return;
+                    try { unregisterReceiver(this); } catch (Exception ignored) { }
+                    updateReceiver = null;
+                    try {
+                        Uri u = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fileprovider", apk);
+                        Intent inst = new Intent(Intent.ACTION_VIEW);
+                        inst.setDataAndType(u, "application/vnd.android.package-archive");
+                        inst.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(inst);
+                        js("window.mitvUpdateEvent&&mitvUpdateEvent('install')");
+                    } catch (Exception e) {
+                        js("window.mitvUpdateEvent&&mitvUpdateEvent('fail')");
+                    }
+                }
+            };
+            IntentFilter f = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+            if (Build.VERSION.SDK_INT >= 33) registerReceiver(updateReceiver, f, Context.RECEIVER_EXPORTED);
+            else registerReceiver(updateReceiver, f);
+            js("window.mitvUpdateEvent&&mitvUpdateEvent('download')");
+        } catch (Exception e) {
+            js("window.mitvUpdateEvent&&mitvUpdateEvent('fail')");
         }
     }
 
@@ -456,6 +541,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (updateReceiver != null) { try { unregisterReceiver(updateReceiver); } catch (Exception ignored) { } }
         web.destroy();
         super.onDestroy();
     }

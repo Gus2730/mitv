@@ -1,10 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 320x180 banner shown on the Android TV / Fire TV home screen -->
+<!-- Banner 320x180 que se ve en el inicio de Android TV / Fire TV -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="320dp" android:height="180dp"
     android:viewportWidth="320" android:viewportHeight="180">
-    <path android:fillColor="#0B0F17" android:pathData="M0,0h320v180h-320z" />
-    <path android:fillColor="#00000000" android:strokeColor="#2FD18B" android:strokeWidth="8"
-        android:pathData="M70,50 h180 a12,12 0 0 1 12,12 v56 a12,12 0 0 1 -12,12 h-180 a12,12 0 0 1 -12,-12 v-56 a12,12 0 0 1 12,-12 z" />
-    <path android:fillColor="#2FD18B" android:pathData="M145,68 L182,90 L145,112 Z" />
+    <path android:pathData="M0,0h320v180h-320z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="0" android:startY="0" android:endX="320" android:endY="180"
+                android:startColor="#0B0F17" android:endColor="#10242B" android:type="linear" />
+        </aapt:attr>
+    </path>
+    <!-- resplandor -->
+    <path android:fillColor="#142FD18B" android:pathData="M60,90 m-70,0 a70,70 0 1 0 140,0 a70,70 0 1 0 -140,0" />
+    <!-- TV -->
+    <path android:fillColor="#00000000" android:strokeColor="#2FD18B" android:strokeWidth="3"
+        android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M42,52 L60,38 L78,52" />
+    <path android:pathData="M30,54 h60 a8,8 0 0 1 8,8 v40 a8,8 0 0 1 -8,8 h-60 a8,8 0 0 1 -8,-8 v-40 a8,8 0 0 1 8,-8 z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:startX="22" android:startY="54" android:endX="98" android:endY="110"
+                android:startColor="#3BE3A0" android:endColor="#169E68" android:type="linear" />
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#0B0F17"
+        android:pathData="M33,59 h54 a4,4 0 0 1 4,4 v38 a4,4 0 0 1 -4,4 h-54 a4,4 0 0 1 -4,-4 v-38 a4,4 0 0 1 4,-4 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M52,69 L74,82 L52,95 Z" />
+    <!-- letras: Mi -->
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="9"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M128,112 L128,70 L145,96 L162,70 L162,112" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="9"
+        android:strokeLineCap="round" android:pathData="M182,86 L182,112" />
+    <path android:fillColor="#FFFFFF" android:pathData="M182,70 m-5.5,0 a5.5,5.5 0 1 0 11,0 a5.5,5.5 0 1 0 -11,0" />
+    <!-- letras: TV -->
+    <path android:fillColor="#00000000" android:strokeColor="#2FD18B" android:strokeWidth="9"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M202,72 L232,72 M217,72 L217,112" />
+    <path android:fillColor="#00000000" android:strokeColor="#2FD18B" android:strokeWidth="9"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M244,72 L259,112 L274,72" />
+    <path android:fillColor="#99C3CDDC" android:pathData="M128,134 h146 v3 h-146 z" />
 </vector>

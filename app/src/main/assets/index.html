@@ -359,6 +359,76 @@ html.sidenav #qSug{width:240px}
 html.sidenav .iconbtn,html.sidenav .avatar{align-self:flex-start;margin-left:8px}
 html.sidenav main{min-height:100vh}
 html.sidenav aside{top:0;max-height:100vh}
+/* MiTV 3.9: aspecto premium */
+[data-theme=oled]{--bg:#000;--panel:#0b0b0d;--panel2:#16161a;--line:#26262c;--thumb1:#141418;--thumb2:#050506;--ini:#6b7280}
+[data-theme=oceano]{--bg:#04141c;--panel:#082431;--panel2:#0d3345;--line:#174a60;--accent:#22d3ee;--accent2:#0eb4d0;--onaccent:#03161c;--thumb1:#0d3345;--thumb2:#061c27;--ini:#4a8aa3}
+[data-theme=atardecer]{--bg:#160b1e;--panel:#21102c;--panel2:#2e1740;--line:#4a2a63;--accent:#ff8a4c;--accent2:#e8702f;--onaccent:#1a0a00;--thumb1:#2e1740;--thumb2:#190c24;--ini:#9a6bb8}
+[data-theme=bosque]{--bg:#07130d;--panel:#0d2017;--panel2:#14301f;--line:#21472f;--accent:#8bd450;--accent2:#6fb83a;--onaccent:#0a1a05;--thumb1:#14301f;--thumb2:#09180f;--ini:#5f9a72}
+.sr{position:absolute;left:-9999px}
+.avpick{display:flex;gap:6px;flex-wrap:wrap}
+.avpick .chip{min-width:46px;text-align:center;font-size:20px}
+.thumb{background:linear-gradient(135deg,var(--tc,var(--thumb1)),var(--thumb2))}
+.thumb .ini{color:#ffffffe0;letter-spacing:.5px;text-shadow:0 2px 8px #0006}
+.thumb img{filter:drop-shadow(0 2px 6px #0008)}
+.card{transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s,border-color .18s,opacity .2s}
+.card:hover,.card:focus-visible{transform:translateY(-2px) scale(1.04);z-index:3;box-shadow:0 0 0 2px var(--accent),0 14px 30px #0009}
+html.tv .card:focus{transform:scale(1.07);z-index:3;box-shadow:0 0 0 3px var(--accent),0 16px 36px #000a}
+html.fxfull .grid:has(.card:focus-visible) .card:not(:focus-visible):not(:hover){opacity:.6}
+.card .name{letter-spacing:.1px}
+.loading.skel{background:none;border:0;padding:0}
+.sk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cardmin),1fr));gap:12px}
+.sk{border-radius:var(--radius);background:var(--panel);border:1px solid var(--line);overflow:hidden}
+.sk i{display:block;height:92px;background:linear-gradient(100deg,var(--panel2) 40%,var(--line) 50%,var(--panel2) 60%);background-size:200% 100%}
+.sk b{display:block;height:12px;margin:12px;border-radius:6px;background:var(--panel2);width:70%}
+html.fxfull .sk i{animation:shimmer 1.3s linear infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.97)}}
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}}
+html.fxfull #content.vin{animation:viewIn .3s ease-out}
+html.fxfull .grid .card{animation:cardIn .42s backwards}
+html.fxfull .grid .card:nth-child(2){animation-delay:.03s}html.fxfull .grid .card:nth-child(3){animation-delay:.06s}html.fxfull .grid .card:nth-child(4){animation-delay:.09s}
+html.fxfull .grid .card:nth-child(5){animation-delay:.12s}html.fxfull .grid .card:nth-child(6){animation-delay:.15s}html.fxfull .grid .card:nth-child(7){animation-delay:.18s}
+html.fxfull .grid .card:nth-child(8){animation-delay:.21s}html.fxfull .grid .card:nth-child(9){animation-delay:.24s}html.fxfull .grid .card:nth-child(10){animation-delay:.27s}
+html.fxfull .grid .card:nth-child(n+11){animation-delay:.3s}
+html.fxfull .modal{animation:cardIn .25s backwards}
+#splash svg rect{stroke-dasharray:320;stroke-dashoffset:320;animation:draw .9s .1s ease-out forwards}
+#splash svg path{opacity:0;animation:pop .45s .7s ease-out forwards}
+#splash .logo{opacity:0;animation:fadeUp .5s .5s ease-out forwards}
+#splash::after{content:"";width:140px;height:3px;border-radius:2px;margin-top:14px;background:linear-gradient(90deg,transparent,#2fd18b,transparent);background-size:200% 100%;animation:shimmer 1.2s linear infinite}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{from{opacity:0;transform:scale(.6);transform-origin:center}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+/* Reproductor */
+.pbar button{background:#ffffff1f;border:0;backdrop-filter:blur(6px);padding:9px 14px;border-radius:12px}
+.pbar button:focus-visible,.pbar button:hover{background:#ffffff40}
+#pBadge{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+#pBadge .bd{font-size:12px;font-weight:700;padding:2px 9px;border-radius:7px;background:#0b0f17cc;color:#dbe3f0;letter-spacing:.3px}
+#pBadge .bd.live{background:#e5484d;color:#fff}
+#pBadge .bd.good{color:#2fd18b}#pBadge .bd.mid{color:#ffb547}#pBadge .bd.bad{color:#ff6b6b}
+.osd-prog{height:5px;border-radius:3px;background:#ffffff33;overflow:hidden;margin:4px 0 2px;min-width:200px}
+.osd-prog i{display:block;height:100%;background:#2fd18b;border-radius:3px}
+#osd{border-radius:18px;backdrop-filter:blur(8px)}
+html.tv .pbar{top:auto;bottom:0;background:linear-gradient(#0000,#000e 60%);padding:34px 40px 30px}
+html.tv .pbar .t{order:-1;flex-basis:100%}
+html.tv .pbar .t b{font-size:26px}
+html.tv .pbar button{padding:12px 20px;font-size:17px;border-radius:14px}
+html.tv #pMenu{top:auto;bottom:130px;right:40px}
+html.tv #osd{bottom:190px}
+/* Agenda deportiva tipo marcador */
+.match{grid-template-columns:130px 1fr 1fr auto;border-radius:16px;background:linear-gradient(135deg,var(--panel),var(--panel2));padding:14px 18px}
+.match .mt{font-weight:700}
+.match .mteams{gap:6px}
+.match .mteams span{display:flex;align-items:center;gap:10px;font-size:17px}
+.match .mteams b{margin-left:auto;font-size:26px;font-weight:800;min-width:34px;text-align:right;font-variant-numeric:tabular-nums;color:var(--accent)}
+.match img{width:28px;height:28px}
+/* Resumen mensual */
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:12px 0}
+.sumcard{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.sumcard b{display:block;font-size:26px;color:var(--accent);letter-spacing:-.5px}
+.sumcard span{color:var(--muted);font-size:13px}
+.sumtop{display:flex;align-items:center;gap:10px;margin:6px 0}
+.sumtop .hbar{flex:1}
+.sumtop small{width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -451,8 +521,9 @@ const COUNTRIES = [
 const CACHE_HOURS = 6, HEALTH_MIN = 30;
 const CAT_ES = { Animation:'Animación', Auto:'Autos', Business:'Negocios', Classic:'Clásicos', Comedy:'Comedia', Cooking:'Cocina', Culture:'Cultura', Documentary:'Documentales', Education:'Educación', Entertainment:'Entretenimiento', Family:'Familia', General:'General', Kids:'Infantil', Legislative:'Legislativo', Lifestyle:'Estilo de vida', Movies:'Películas', Music:'Música', News:'Noticias', Outdoor:'Aire libre', Religious:'Religión', Science:'Ciencia', Series:'Series', Shop:'Compras', Sports:'Deportes', Travel:'Viajes', Weather:'Clima', Undefined:'Otros', Relax:'Relax', Public:'Público', Interactive:'Interactivo' };
 const KIDS_CATS = ['kids','animation','family','education'];
-const THEMES = [['','Oscuro'],['medianoche','Medianoche'],['tica','Azul y rojo'],['claro','Claro']];
+const THEMES = [['','Oscuro'],['oled','Negro puro'],['medianoche','Medianoche'],['tica','Azul y rojo'],['oceano','Océano'],['atardecer','Atardecer'],['bosque','Bosque'],['claro','Claro']];
 const COLORS = ['#2fd18b','#6c8cff','#e63946','#ffb547','#b86bff','#22b8cf'];
+const AVATARS = ['🦊','🐼','🦁','🐯','🐸','🐧','🦄','🚀','⚽','🎸','🌈','🎬'];
 const catName = c => CAT_ES[c] || c;
 const android = window.MiTVAndroid || null;
 // Modo TV: Fire TV, Android TV y televisores. Usa menos recursos y se maneja con el control.
@@ -511,7 +582,7 @@ function loadProfile(){
   document.documentElement.dataset.theme = P.theme;
   document.documentElement.classList.toggle('big', !!P.big);
   const pr = profile();
-  const b = $('#profBtn'); b.textContent = pr.name[0].toUpperCase(); b.style.background = pr.color;
+  const b = $('#profBtn'); b.textContent = pr.icon || pr.name[0].toUpperCase(); b.style.background = pr.color;
 }
 const profile = () => S.profiles.find(p => p.id === S.pid);
 const saveCfg = () => store.set('cfg', S.cfg);
@@ -929,6 +1000,14 @@ function jfItem(x){
 /* =====================================================================
    Tarjetas y cuadrículas
    ===================================================================== */
+function tileColor(name){
+  let h = 7; const s = String(name || '?');
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+  return `hsl(${h} 42% 27%)`;
+}
+function skeletonHTML(n){
+  return `<div class="sk-grid" aria-hidden="true">${'<div class="sk"><i></i><b></b></div>'.repeat(n || 12)}</div><span class="sr">Cargando…</span>`;
+}
 function thumbHTML(it, poster){
   const img = poster ? it.poster : it.logo;
   const ini = esc(initials(it.name));
@@ -942,7 +1021,7 @@ function cardsHTML(items, { numbers, poster }){
     return `<button class="card" data-i="${i}">
       ${numbers ? `<span class="num">${i + 1}</span>` : ''}
       <span class="badges">${isLocked(it) ? '🔒' : ''}${isFav(it.url) ? '<span style="color:var(--warn)">★</span>' : ''}</span>
-      <div class="thumb">${thumbHTML(it, poster)}</div>
+      <div class="thumb"${poster ? '' : ` style="--tc:${tileColor(it.name)}"`}>${thumbHTML(it, poster)}</div>
       ${pr && pr.d ? `<div class="pbar2"><i style="width:${Math.min(100, pr.t / pr.d * 100).toFixed(1)}%"></i></div>` : ''}
       <div class="meta"><div class="name">${esc(it.title || it.name)}</div>
         ${nn && nn.now ? `<div class="now">Ahora: ${esc(nn.now.title)}</div>` : `<div class="grp">${esc(it.year && poster ? it.year : (it.group || '').split(';').map(g => catName(g.trim())).join(' · ') || ' ')}</div>`}
@@ -983,7 +1062,7 @@ function bindHead(target){
   if (d) d.onclick = () => runDiagnosis(S.visible);
 }
 async function withLoading(target, fn){
-  target.innerHTML = '<div class="loading">Cargando…</div>';
+  target.innerHTML = '<div class="loading skel">' + skeletonHTML(IS_TV ? 12 : 18) + '</div>';
   try { await fn(); tvRefocus(); }
   catch(err){
     logEvent('carga', err.message);
@@ -1265,10 +1344,12 @@ function openDetail(list, i){
         ${pr && pr.d ? `<p class="muted">Vista hasta ${fmtDur(pr.t)} de ${fmtDur(pr.d)}</p>` : ''}
       </div></div>
       <div class="actions">
+        ${S.cfg.tmdbKey && !it.jf && !it.local ? '<button class="btn ghost" id="dTrailer">🎞 Tráiler</button>' : ''}
         ${pr ? '<button class="btn ghost" id="dStart">Desde el inicio</button>' : ''}
         <button class="btn" id="dPlay" autofocus>${pr ? '▶ Continuar' : '▶ Reproducir'}</button>
       </div>`);
   md.querySelector('#dPlay').onclick = () => { closeModal(); play(list, i); };
+  if (md.querySelector('#dTrailer')) md.querySelector('#dTrailer').onclick = () => trailerFor(it);
   if (md.querySelector('#dStart')) md.querySelector('#dStart').onclick = () => { closeModal(); delete P.progress[itemKey(it)]; pstore.set('progress', P.progress); play(list, i); };
 }
 
@@ -1386,7 +1467,7 @@ function viewAjustes(){
   <div class="box"><h3>Reproducción</h3>
     <div class="field" style="max-width:320px"><label>Calidad predeterminada</label>
       <select id="qual"><option value="auto">Automática</option><option value="hd">Siempre la mejor (HD)</option><option value="saver">Ahorro de datos (máx. 480p)</option></select></div>
-    <label class="switch"><input type="checkbox" id="prev" ${S.cfg.preview ? 'checked' : ''}> Vista previa al pasar por un canal</label>
+    <label class="switch"><input type="checkbox" id="prev" ${S.cfg.preview ? 'checked' : ''}> Vista previa en vivo al pasar por un canal (en la TV puede ir lento)</label>
     <label class="switch"><input type="checkbox" id="hlth" ${S.cfg.health ? 'checked' : ''}> Revisar qué canales están funcionando</label>
   </div>
 
@@ -1569,13 +1650,20 @@ function importCode(){
 /* ---------- Perfiles ---------- */
 function openProfiles(){
   const md = openModal(`<h3>¿Quién está viendo?</h3>
-    <div class="prof" id="profs">${S.profiles.map(p => `<button class="p ${p.id === S.pid ? 'on' : ''}" data-p="${p.id}"><span class="avatar" style="background:${p.color};display:flex;align-items:center;justify-content:center">${esc(p.name[0].toUpperCase())}</span>${esc(p.name)}${p.kids ? ' 🧸' : ''}</button>`).join('')}</div>
+    <div class="prof" id="profs">${S.profiles.map(p => `<button class="p ${p.id === S.pid ? 'on' : ''}" data-p="${p.id}"><span class="avatar" style="background:${p.color};display:flex;align-items:center;justify-content:center">${esc(p.icon || p.name[0].toUpperCase())}</span>${esc(p.name)}${p.kids ? ' 🧸' : ''}</button>`).join('')}</div>
+    <div class="box" style="margin-top:16px"><h3>Avatar de ${esc(profile().name)}</h3>
+      <div class="avpick" id="avp"><button class="chip ${profile().icon ? '' : 'active'}" data-av="">${esc(profile().name[0].toUpperCase())}</button>${AVATARS.map(a => `<button class="chip ${profile().icon === a ? 'active' : ''}" data-av="${a}">${a}</button>`).join('')}</div></div>
     <div class="box" style="margin-top:16px"><h3>Agregar perfil</h3>
       <form id="npf" class="row"><div class="field"><input id="npn" placeholder="Nombre" required maxlength="16"></div>
       <label class="switch"><input type="checkbox" id="npk"> Infantil</label><button class="btn">Agregar</button></form></div>
     ${S.profiles.length > 1 ? `<div class="row"><span class="muted">Eliminar:</span>${S.profiles.filter(p => p.id !== S.pid).map(p => `<button class="chip" data-del="${p.id}">${esc(p.name)} ✕</button>`).join('')}</div>` : ''}
     <div class="actions"><button class="btn ghost" id="pfNo">Cerrar</button></div>`);
   md.querySelector('#pfNo').onclick = () => closeModal();
+  md.querySelector('#avp').onclick = e => {
+    const b = e.target.closest('[data-av]'); if (!b) return;
+    const p = profile(); p.icon = b.dataset.av; store.set('profiles', S.profiles);
+    closeModal(); loadProfile(); openProfiles();
+  };
   md.querySelector('#profs').onclick = async e => {
     const b = e.target.closest('[data-p]'); if (!b) return;
     if (b.dataset.p === S.pid){ if (S.startupPick){ S.startupPick = false; closeModal(); resumeLast(); } return; }
@@ -1892,6 +1980,8 @@ $('#pMore').onclick = () => {
     entries.push(r ? { label: '⏹ Detener grabación', fn: () => stopRecording(r) }
       : { label: '⏺ Grabar ahora', fn: async () => { let h = null; try { h = await askSaveHandle(it.name); } catch(e){ return; } startRecording(it, { handle: h }); } });
   }
+  if (!it.local) entries.push({ label: '📡 Enviar a otro dispositivo…', fn: () => setTimeout(() => sendToDevice(it), 0) });
+  if (!android && video.remote && !it.local && it.kind !== 'youtube') entries.push({ label: '📺 Transmitir a Chromecast / TV…', fn: () => setTimeout(castScreen, 0) });
   entries.push({ label: S.sleepAt ? '🌙 Apagado a las ' + fmtTime(new Date(S.sleepAt)) + ' (cambiar)' : '🌙 Apagar automáticamente…', fn: () => setTimeout(sleepMenu, 0) });
   if (S.cfg.pin && !it.local){
     const locked = S.cfg.lockedUrls.includes(it.url);
@@ -2079,7 +2169,7 @@ document.addEventListener('keydown', e => {
 /* =====================================================================
    MiTV 3 · Versión, actualizaciones y pantalla de carga
    ===================================================================== */
-const APP_VERSION = '3.8';
+const APP_VERSION = '3.9';
 const BUILT_HOME = '__MITV_HOME__';
 function homeUrl(){
   if (S.cfg.homeUrl) return S.cfg.homeUrl.replace(/\/?$/, '/');
@@ -2105,14 +2195,14 @@ function showUpdate(v, home){
   const bar = $('#updBar');
   const apk = v.apk ? new URL(v.apk, home).href : home + 'MiTV.apk';
   bar.innerHTML = `<span>Hay una versión nueva de MiTV (${esc(v.version)}).</span>` +
-    (android ? `<button class="btn small" id="updGo">Descargar e instalar</button>`
+    (android ? `<button class="btn small" id="updGo">Actualizar ahora</button>`
       : navigator.serviceWorker && navigator.serviceWorker.controller ? `<button class="btn small" id="updGo">Actualizar ahora</button>`
       : `<a class="btn small" href="${esc(home)}" target="_blank" rel="noopener">Ver novedades</a>`) +
     `<button class="btn ghost small" id="updNo">Después</button>`;
   bar.classList.add('show');
   const go = $('#updGo');
   if (go) go.onclick = () => {
-    if (android){ location.href = apk; return; }
+    if (android){ if (android.installUpdate){ window.__apk = apk; android.installUpdate(apk); } else location.href = apk; return; }
     navigator.serviceWorker.getRegistration().then(r => r && r.update()).finally(() => location.reload());
   };
   $('#updNo').onclick = () => bar.classList.remove('show');
@@ -2226,7 +2316,7 @@ function viewInicio(){
   content.innerHTML = `
     <div class="topline"><div><h2>${h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches'}, ${esc(pr.name)}</h2>
     <p class="sub">${new Date().toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric', month: 'long' })}</p></div>
-    <div class="row"><div class="wx" id="wx"><span class="muted">Cargando clima…</span></div><button class="btn ghost" id="trafBtn">🚗 Tráfico</button></div></div>
+    <div class="row"><div class="wx" id="wx"><span class="muted">Cargando clima…</span></div><button class="btn ghost" id="trafBtn">🚗 Tráfico</button><button class="btn ghost" id="sumHome">📊 Mi resumen</button></div></div>
     ${P.lastLive ? `<button class="hero" id="heroLast">
         <div class="hero-img">${P.lastLive.logo ? `<img src="${esc(P.lastLive.logo)}" alt="" onerror="this.remove()">` : `<span class="ini">${esc(initials(P.lastLive.name))}</span>`}</div>
         <div><small>Seguir viendo</small><b>${esc(P.lastLive.name)}</b><span class="muted">${esc(nowNextLine(P.lastLive) || 'Toca para continuar')}</span></div>
@@ -2243,6 +2333,7 @@ function viewInicio(){
   if (P.lastLive) $('#heroLast').onclick = () => play([P.lastLive], 0);
   if (P.lastLive && P.lastLive.logo) $('#bgArt').style.backgroundImage = `url("${P.lastLive.logo.replace(/"/g, '')}")`;
   $('#trafBtn').onclick = openTraffic;
+  $('#sumHome').onclick = openSummary;
   weather().then(v => { if ($('#wx')) $('#wx').innerHTML = weatherHTML(v); }).catch(() => { if ($('#wx')) $('#wx').innerHTML = '<span class="muted">Clima no disponible</span>'; });
   if (cont.length) renderGrid($('#rCont'), cont, '', { poster: true, row: true });
   if (favLive.length) renderGrid($('#rFav'), favLive, '', { live: false, row: true });
@@ -3030,6 +3121,7 @@ function execRemote(cmd){
   if (k === 'home'){ while (modals.length) closeModal(); if (player.classList.contains('open')) closePlayer(); S.tab = 'inicio'; return render(); }
   if (k === 'chup') return player.classList.contains('open') ? step(-1) : null;
   if (k === 'chdown') return player.classList.contains('open') ? step(1) : null;
+  if (k === 'playch'){ try { const it = JSON.parse(cmd.v); toast('Recibido: ' + it.name); play([it], 0); } catch(e){} return; }
   if (k === 'last') return prevChannel();
   if (k === 'pp'){ if (video.paused) video.play().catch(() => {}); else video.pause(); return; }
   if (k === 'mute'){ video.muted = !video.muted; return toast(video.muted ? 'Silenciado' : 'Sonido activado'); }
@@ -3318,7 +3410,7 @@ function startup3(){
   // Android borra las alarmas al reiniciar el equipo: volver a programarlas al abrir la app
   if (android && android.scheduleReminder) S.reminders.filter(r => !r.notified && r.at > Date.now()).forEach(r => android.scheduleReminder(r.id, Math.max(Date.now() + 5000, r.at - 5*60e3), '🔔 ' + r.title, 'Empieza a las ' + fmtTime(new Date(r.at)) + (r.body ? ' · ' + r.body : '')));
   registerSW();
-  setTimeout(hideSplash, 300);
+  setTimeout(hideSplash, IS_TV || LITE || navigator.webdriver ? 300 : 1400);
   setTimeout(() => checkUpdates(false), 5000);
   cloudStart();
   if (S.profiles.length > 1) S.startupPick = true; else resumeLast();
@@ -3419,7 +3511,7 @@ function afterPlay(it, items, index){
   o.innerHTML = `<div class="osd-num">${index + 1}</div>
     <div class="osd-logo">${it.logo ? `<img src="${esc(it.logo)}" alt="" onerror="this.remove()">` : ''}</div>
     <div class="osd-txt"><b>${esc(it.name)}</b>
-      ${nn && nn.now ? `<span>Ahora: ${esc(nn.now.title)} · hasta ${fmtTime(new Date(nn.now.stop))}</span>` : `<span>${esc((it.group || '').split(';').map(g => catName(g.trim())).join(' · '))}</span>`}
+      ${nn && nn.now ? `<span>Ahora: ${esc(nn.now.title)} · hasta ${fmtTime(new Date(nn.now.stop))}</span><div class="osd-prog"><i style="width:${Math.max(2, Math.min(100, (Date.now() - nn.now.start) / Math.max(1, nn.now.stop - nn.now.start) * 100)).toFixed(0)}%"></i></div>` : `<span>${esc((it.group || '').split(';').map(g => catName(g.trim())).join(' · '))}</span>`}
       ${nn && nn.next ? `<small>Sigue: ${esc(nn.next.title)}</small>` : ''}</div>`;
   o.classList.add('show');
   clearTimeout(osdTimer); osdTimer = setTimeout(() => o.classList.remove('show'), 5000);
@@ -3904,6 +3996,7 @@ function ajustesExtra5(target){
   $('#sleepS').onchange = e => { if (e.target.value !== '') setSleep(+e.target.value); e.target.value = ''; };
   $('#guideBtn').onclick = showGuide;
   updateSleepLabel();
+  ajustesExtra6(target);
 }
 
 /* ---------- Menú lateral en TV ---------- */
@@ -3936,6 +4029,215 @@ function startup5(){
   if (!store.get('guided', false) && !navigator.webdriver) setTimeout(() => { if (!modals.length && !player.classList.contains('open')) showGuide(); else store.set('guided', true); }, 1500);
 }
 
+/* =====================================================================
+   MiTV 3.9 · Experiencia premium
+   ===================================================================== */
+
+/* ---------- Efectos visuales: completos o ligeros (la TV usa ligeros por defecto) ---------- */
+const fxMode = () => S.cfg.fx || (IS_TV || LITE ? 'lite' : 'full');
+function applyFx(){ document.documentElement.classList.toggle('fxfull', fxMode() === 'full'); }
+
+/* Transición suave al cambiar de sección */
+const render6 = render;
+render = function(){
+  const r = render6.apply(this, arguments);
+  try { content.classList.remove('vin'); void content.offsetWidth; content.classList.add('vin'); } catch(e){}
+  return r;
+};
+
+/* ---------- Sonidos discretos de navegación (TV) ---------- */
+let audioCtx = null;
+const soundsOn = () => S.cfg.sounds !== undefined ? !!S.cfg.sounds : IS_TV;
+function beep(freq, dur, vol){
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime;
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + dur + 0.02);
+  } catch(e){}
+}
+document.addEventListener('keydown', e => {
+  if (!soundsOn() || e.repeat || player.classList.contains('open')) return;
+  if (e.key.startsWith('Arrow')) beep(540, 0.05, 0.035);
+  else if (e.key === 'Enter') beep(820, 0.09, 0.05);
+  else if (e.key === 'Escape' || e.key === 'Backspace') beep(330, 0.09, 0.04);
+}, true);
+
+/* ---------- Insignias del reproductor: EN VIVO, calidad y estabilidad de la señal ---------- */
+let stalls = [];
+video.addEventListener('waiting', () => { stalls.push(Date.now()); });
+function updBadge(){
+  if (!player.classList.contains('open')) return;
+  let t = $('#pBadge');
+  if (!t){ t = document.createElement('div'); t.id = 'pBadge'; $('#pSub').insertAdjacentElement('afterend', t); }
+  const it = S.current && S.current.items[S.current.index];
+  if (!it){ t.innerHTML = ''; return; }
+  const live = !isVod(it) && it.kind !== 'youtube' && it.kind !== 'radio' && it.kind !== 'podcast';
+  stalls = stalls.filter(x => Date.now() - x < 60000);
+  const q = !stalls.length ? ['good', 'Señal estable'] : stalls.length < 3 ? ['mid', 'Señal regular'] : ['bad', 'Conexión inestable'];
+  const h = video.videoHeight;
+  t.innerHTML = (live ? '<span class="bd live">● EN VIVO</span>' : '') +
+    (h && it.kind !== 'youtube' ? `<span class="bd">${h >= 2160 ? '4K' : h >= 1080 ? '1080p' : h >= 720 ? '720p' : h + 'p'}</span>` : '') +
+    (live && h && !video.paused ? `<span class="bd ${q[0]}">${q[1]}</span>` : '');
+}
+['playing', 'resize', 'loadedmetadata', 'pause'].forEach(ev => video.addEventListener(ev, updBadge));
+setInterval(updBadge, 3000);
+
+/* ---------- Tu resumen MiTV ---------- */
+function openSummary(){
+  const st = P.stats, ym = todayKey().slice(0, 7);
+  const monthDays = Object.entries(st.day).filter(([d]) => d.startsWith(ym));
+  const secs = monthDays.reduce((a, [, s]) => a + s, 0);
+  const active = monthDays.filter(([, s]) => s >= 60).length;
+  // Racha: días seguidos con televisión, contando desde hoy (o ayer)
+  let streak = 0; const d = new Date();
+  if (!(st.day[d.toLocaleDateString('sv')] >= 60)) d.setDate(d.getDate() - 1);
+  while (st.day[d.toLocaleDateString('sv')] >= 60){ streak++; d.setDate(d.getDate() - 1); }
+  // Día de la semana más activo
+  const wd = [0, 0, 0, 0, 0, 0, 0];
+  Object.entries(st.day).forEach(([k, s]) => { wd[new Date(k + 'T12:00:00').getDay()] += s; });
+  const names = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const best = Math.max(...wd), bestDay = best > 0 ? names[wd.indexOf(best)] : '—';
+  const topCh = Object.entries(st.ch).sort((a, b) => b[1].s - a[1].s).slice(0, 5);
+  const maxC = Math.max(1, ...topCh.map(c => c[1].s));
+  const topCat = Object.entries(st.cat).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const maxK = Math.max(1, ...topCat.map(c => c[1]));
+  const month = new Date().toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
+  const md = openModal(`<h3>📊 Tu resumen MiTV</h3><p class="muted" style="margin-top:0">${esc(profile().name)} · ${esc(month)}</p>
+    ${secs || topCh.length ? `<div class="sumgrid">
+      <div class="sumcard"><b>${esc(fmtMins(secs))}</b><span>vistos este mes</span></div>
+      <div class="sumcard"><b>${active}</b><span>${active === 1 ? 'día' : 'días'} con TV este mes</span></div>
+      <div class="sumcard"><b>${streak}</b><span>${streak === 1 ? 'día' : 'días'} seguidos</span></div>
+      <div class="sumcard"><b style="font-size:20px;text-transform:capitalize">${esc(bestDay)}</b><span>tu día más de TV</span></div></div>
+      ${topCh[0] ? `<p>Tu canal número 1: <b style="color:var(--accent)">${esc(topCh[0][1].n)}</b></p>` : ''}
+      ${topCh.length ? '<p class="muted" style="margin-bottom:4px">Lo más visto</p>' + topCh.map(([u, c]) => `<div class="hbar"><span>${esc(c.n)}</span><i style="width:${(c.s / maxC * 100).toFixed(0)}%"></i><small>${esc(fmtMins(c.s))}</small></div>`).join('') : ''}
+      ${topCat.length ? '<p class="muted" style="margin-bottom:4px">Tus categorías</p>' + topCat.map(([c, s]) => `<div class="hbar"><span>${esc(catName(c))}</span><i style="width:${(s / maxK * 100).toFixed(0)}%"></i><small>${esc(fmtMins(s))}</small></div>`).join('') : ''}
+      <p class="muted" style="font-size:12px">Los canales y categorías cubren lo guardado de los últimos 60 días de este perfil.</p>`
+    : '<div class="empty">Todavía no hay datos. Mira algo de televisión y aquí aparecerá tu resumen.</div>'}
+    <div class="actions"><button class="btn" id="sumNo" autofocus>Cerrar</button></div>`);
+  md.querySelector('#sumNo').onclick = () => closeModal();
+}
+
+/* ---------- Tráiler de películas (TMDB + YouTube) ---------- */
+async function trailerFor(it){
+  const key = (S.cfg.tmdbKey || '').trim();
+  if (!key){ toast('Agrega tu clave de TMDB en Ajustes para ver tráilers'); return; }
+  const bearer = key.length > 40, g = titleGuess(it.name);
+  const call = async path => {
+    const u = `https://api.themoviedb.org/3/${path}${path.includes('?') ? '&' : '?'}${bearer ? '' : 'api_key=' + encodeURIComponent(key)}`;
+    const r = await fetch(u, bearer ? { headers: { Authorization: 'Bearer ' + key } } : {});
+    if (!r.ok) throw new Error('TMDB ' + r.status);
+    return r.json();
+  };
+  toast('Buscando el tráiler…');
+  try {
+    const s = await call(`search/movie?language=es-MX&include_adult=false&query=${encodeURIComponent(g.title)}${g.year ? '&year=' + g.year : ''}`);
+    const m = (s.results || [])[0];
+    if (!m){ toast('No se encontró esta película en TMDB'); return; }
+    let vids = [];
+    for (const lang of ['es-MX', 'en-US']){
+      const v = await call(`movie/${m.id}/videos?language=${lang}`);
+      vids = (v.results || []).filter(x => x.site === 'YouTube' && /trailer|teaser/i.test(x.type));
+      if (vids.length) break;
+    }
+    const pick = vids.find(x => x.type === 'Trailer') || vids[0];
+    if (!pick){ toast('Esta película no tiene tráiler disponible'); return; }
+    closeModal();
+    play([{ name: (it.title || it.name) + ' · tráiler', url: 'yt:video:' + pick.key, kind: 'youtube', yt: { type: 'video', id: pick.key }, logo: it.poster || '', group: 'Tráiler' }], 0);
+  } catch(e){ toast('No se pudo cargar el tráiler: ' + e.message); }
+}
+
+/* ---------- Enviar el canal a otro dispositivo (por ejemplo, del celular a la TV) ---------- */
+async function sendToDevice(it){
+  if (!it || it.local){ toast('Este contenido está solo en este dispositivo'); return; }
+  if (!cloudReady()){ toast('Inicia sesión en la nube (Ajustes) en los dos dispositivos para enviar canales'); return; }
+  let devs = {};
+  try { devs = await fb('GET', `users/${cloud().uid}/devices`) || {}; } catch(e){ toast(e.message); return; }
+  const list = Object.entries(devs).filter(([id]) => id !== devId).sort((a, b) => b[1].ts - a[1].ts);
+  if (!list.length){ toast('No hay otros dispositivos con tu cuenta. Inicia sesión en tu TV con la misma cuenta.'); return; }
+  const md = openModal(`<h3>📡 Enviar a la TV</h3><p class="muted" style="margin-top:0">${esc(it.title || it.name)}</p>
+    ${list.map(([id, d]) => `<button class="btn ghost" data-t="${esc(id)}" style="display:block;width:100%;margin:6px 0;text-align:left">${esc(d.name)} <span class="muted">· visto ${fmtTime(new Date(d.ts))}</span></button>`).join('')}
+    <div class="actions"><button class="btn ghost" id="sdNo">Cancelar</button></div>`);
+  md.querySelector('#sdNo').onclick = () => closeModal();
+  md.addEventListener('click', async e => {
+    const b = e.target.closest('[data-t]'); if (!b) return;
+    try {
+      await fb('POST', `users/${cloud().uid}/remote/${b.dataset.t}`, { k: 'playch', v: JSON.stringify(snap(it)), t: Date.now() });
+      closeModal(); toast('Enviado a ' + b.textContent.split(' · ')[0].trim());
+    } catch(err){ toast('No se pudo enviar: ' + err.message); }
+  });
+}
+/* Transmitir a Chromecast u otra pantalla desde el navegador */
+async function castScreen(){
+  if (video.remote && typeof video.remote.prompt === 'function' && !video.disableRemotePlayback){
+    try { await video.remote.prompt(); return; }
+    catch(e){ if (e && e.name === 'NotAllowedError') return; }
+  }
+  openModal(`<h3>📺 Transmitir a la TV</h3>
+    <p>Este navegador no puede enviar este canal directamente a la TV. Dos opciones:</p>
+    <p>1. <b>Chrome o Edge:</b> menú ⋮ → <b>Guardar, compartir y transmitir</b> → <b>Transmitir…</b> y elige tu Chromecast o TV.</p>
+    <p>2. <b>Con MiTV en tu TV:</b> inicia sesión con la misma cuenta en los dos aparatos y usa <b>Más ⋯ → Enviar a otro dispositivo</b>.</p>
+    <div class="actions"><button class="btn" id="csNo" autofocus>Entendido</button></div>`).querySelector('#csNo').onclick = () => closeModal();
+}
+
+/* ---------- Widget de favoritos y canal pedido desde el widget (Android) ---------- */
+let widSig = '';
+function syncWidget(){
+  if (!android || !android.setWidgetFavs) return;
+  try {
+    const favs = P.favs.filter(f => !isVod(f) && f.kind !== 'series' && f.url)
+      .sort((a, b) => ((P.stats.ch[b.url] || {}).s || 0) - ((P.stats.ch[a.url] || {}).s || 0)).slice(0, 5)
+      .map(f => ({ n: f.name, u: f.url }));
+    const sig = JSON.stringify(favs);
+    if (sig !== widSig){ widSig = sig; android.setWidgetFavs(sig); }
+  } catch(e){}
+}
+window.mitvLaunchCheck = function(){
+  if (!android || !android.takeLaunchChannel) return;
+  const u = android.takeLaunchChannel(); if (!u) return;
+  const it = P.favs.find(f => f.url === u);
+  if (it) play([it], 0);
+};
+/* Avisos de la actualización dentro de la app */
+window.mitvUpdateEvent = function(s){
+  const m = {
+    download: 'Descargando la actualización… al terminar, Android te pedirá confirmar la instalación.',
+    install: 'Descarga lista. Acepta la instalación en la pantalla de Android.',
+    perm: 'Activa “Permitir de esta fuente” para MiTV y vuelve a tocar Actualizar.',
+    fail: 'No se pudo instalar automáticamente. Abriendo la descarga…'
+  };
+  toast(m[s] || s);
+  if (s === 'fail' && window.__apk) setTimeout(() => { location.href = window.__apk; }, 1200);
+};
+
+/* ---------- Ajustes de esta versión ---------- */
+function ajustesExtra6(target){
+  if (!target) return;
+  target.insertAdjacentHTML('beforeend', `<div class="box"><h3>✨ Apariencia y extras</h3>
+    <div class="row"><div class="field" style="max-width:300px"><label>Efectos visuales</label><select id="fxS">
+      <option value="full" ${fxMode() === 'full' ? 'selected' : ''}>Completos (animaciones y atenuado)</option>
+      <option value="lite" ${fxMode() === 'lite' ? 'selected' : ''}>Ligeros (recomendado en TV)</option></select></div></div>
+    <label class="switch"><input type="checkbox" id="sndS" ${soundsOn() ? 'checked' : ''}> Sonidos suaves al navegar con el control</label>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="sumBtn">📊 Tu resumen MiTV</button>
+    ${android && android.setWidgetFavs ? '<span class="muted" style="font-size:13px">Widget: mantén presionada la pantalla de inicio de tu celular → Widgets → MiTV.</span>' : ''}</div></div>`);
+  $('#fxS').onchange = e => { S.cfg.fx = e.target.value; saveCfg(); applyFx(); };
+  $('#sndS').onchange = e => { S.cfg.sounds = e.target.checked; saveCfg(); if (e.target.checked) beep(660, 0.1, 0.05); };
+  $('#sumBtn').onclick = openSummary;
+}
+
+/* ---------- Arranque ---------- */
+function startup6(){
+  applyFx();
+  syncWidget();
+  setInterval(syncWidget, 20000);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) syncWidget(); else window.mitvLaunchCheck(); });
+  setTimeout(window.mitvLaunchCheck, 1800);
+}
+
+/* Ganchos para las pruebas automáticas */
+window.mitvTest = { showUpdate, execRemote, soundsOn, closePlayer, applyFx };
+
 
 /* =====================================================================
    Pestañas, búsqueda e inicio
@@ -3949,6 +4251,7 @@ render();
 startup3();
 startup4();
 startup5();
+startup6();
 if (S.profiles.length > 1) openProfiles();
 })();
 </script>
