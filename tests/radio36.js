@@ -1,0 +1,23 @@
+const {chromium}=require('playwright');const {install,B}=require('./mocks');
+const ok=(c,m)=>console.log((c?'✅':'❌')+' '+m);
+(async()=>{const b=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});const p=await (await b.newContext({viewport:{width:1280,height:800}})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));await install(p);
+let byCountryUrl='';
+await p.route(/radio-browser\.info/,r=>{const u=r.request().url();const h={'access-control-allow-origin':'*'};const J=x=>r.fulfill({status:200,contentType:'application/json',headers:h,body:JSON.stringify(x)});
+  if(u.includes('bycountrycodeexact')){byCountryUrl=u;return J([{name:'Radio Columbia 98.7',url_resolved:B+'clip.mp4',stationuuid:'1',countrycode:'CR',lastcheckok:1},{name:'Radio Monumental',url_resolved:B+'clip.mp4',stationuuid:'2',countrycode:'CR',lastcheckok:0},{name:'Radio Reloj',url_resolved:B+'clip.mp4',stationuuid:'3',countrycode:'CR',lastcheckok:0},{name:'Radio Reloj',url_resolved:B+'clip.mp4',stationuuid:'4',countrycode:'CR',lastcheckok:1}]);}
+  if(u.includes('tag=costa')) return J([{name:'Radio Sin País',url_resolved:B+'clip.mp4',stationuuid:'5',countrycode:'',lastcheckok:1}]);
+  if(u.includes('name=columbia')) return J([{name:'Columbia FM',url_resolved:B+'clip.mp4',stationuuid:'6',countrycode:'CO',country:'Colombia',lastcheckok:1},{name:'Radio Columbia 98.7',url_resolved:B+'clip.mp4',stationuuid:'1',countrycode:'CR',country:'Costa Rica',lastcheckok:1}]);
+  J([]);});
+await p.goto(B+'MiTV.html#no-resume');await p.waitForTimeout(1200);await p.$eval('[data-tab=radio]',e=>e.click());await p.waitForTimeout(1500);
+ok(!byCountryUrl.includes('hidebroken=true'),'Ahora pide también las emisoras que fallaron en la última revisión');
+const cards=await p.$$eval('#g .card',c=>c.map(x=>x.querySelector('.name').textContent+' | '+x.querySelector('.grp').textContent));console.log('   '+cards.join('\n   '));
+ok(cards.length===4,'4 emisoras (antes se mostraban 2): sin repetidas');
+ok(/puede fallar/.test(cards[cards.length-1])&&!/Reloj.*puede fallar/.test(cards.join('\n')),'Las que fallaron van al final, y de Radio Reloj se queda la que funciona');
+ok(/4 emisoras · 3 respondieron/.test(await p.textContent('#rqInfo')),'Resumen: '+await p.textContent('#rqInfo'));
+await p.fill('#rq','columbia');await p.click('#fRq button');await p.waitForTimeout(1200);
+const res=await p.$$eval('#g .card .name',n=>n.map(x=>x.textContent));
+ok(res[0]==='Radio Columbia 98.7'&&res.includes('Columbia FM'),'Buscador: primero las de Costa Rica → '+res.join(', '));
+ok(/Colombia/.test(await p.textContent('#g')),'Muestra el país de las emisoras de afuera');
+await p.click('#g .card');await p.waitForTimeout(1200);ok(await p.isVisible('#pAudio'),'La emisora encontrada suena');await p.click('#pFav');await p.keyboard.press('Escape');
+await p.click('#rqClr');await p.waitForTimeout(800);ok(await p.locator('#g .card').count()===4,'Botón Ver todas vuelve a la lista');
+await p.click('[data-r=fav]');await p.waitForTimeout(400);ok((await p.textContent('#g')).includes('Columbia'),'La encontrada queda en Mis radios con ☆');
+console.log('Errores JS:',errs.length?errs:'ninguno');await b.close();})();

@@ -14,7 +14,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Pruebas automáticas: si alguna falla, no se compila ni se publica nada
+  pruebas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Instalar el navegador de pruebas
+        working-directory: tests
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Correr las pruebas (web, celular, TV y modo Android)
+        run: bash tests/correr.sh
+
+      - name: Guardar resultados y capturas si algo falló
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: resultados-pruebas
+          path: |
+            tests/resultado-*.txt
+            tests/*.png
+
   build:
+    needs: pruebas
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7

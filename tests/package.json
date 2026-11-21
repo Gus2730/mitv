@@ -1,0 +1,11 @@
+{
+  "name": "mitv-pruebas",
+  "private": true,
+  "description": "Pruebas automáticas de MiTV (web, celular, TV y modo Android simulado)",
+  "scripts": {
+    "test": "bash correr.sh"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

@@ -97,3 +97,36 @@ Los canales gratuitos no traen guía. Si tu proveedor de IPTV te da un enlace XM
 - **Grabaciones:** funcionan en la computadora (Chrome o Edge) y la app debe quedar abierta mientras graba.
 - **Recordatorios:** en Android llegan como notificación aunque la app esté cerrada (si reinicias el dispositivo, vuelve a abrir MiTV una vez). En la computadora, avisan mientras la app está abierta.
 - **Radio con pantalla apagada:** en Android la radio sigue sonando al apagar la pantalla; algunos equipos con ahorro de batería agresivo pueden detenerla después de un rato.
+
+## Pruebas automáticas
+
+Cada vez que se sube un cambio, GitHub corre primero las pruebas de la carpeta `tests` (unas 300 comprobaciones en web, celular, TV y modo Android simulado). Si alguna falla, **no se compila el APK ni se publica la página**, así nunca sale una versión rota. Los detalles quedan en la pestaña *Actions*, y si algo falla se guardan los resultados y capturas como "resultados-pruebas".
+
+Para correrlas en tu computadora (necesitas Node 22 y Python 3):
+
+```
+cd tests
+npm install
+npx playwright install chromium
+npm test
+```
+
+Las pruebas no usan internet: todo lo externo (listas, deportes, radios, podcasts, Firebase) está simulado, así que dan el mismo resultado siempre.
+
+## Código fuente de la app
+
+La app web (la misma que va dentro del APK) se escribe en la carpeta `fuente`:
+
+- `app.src.html`: estructura, estilos y el código principal.
+- `features3.js` … `features9.js`: las funciones agregadas en cada versión.
+- `build.js`: une todo con el reproductor hls.js, lo minifica y lo copia a `app/src/main/assets/index.html` (Android) y `docs/app/index.html` (página).
+
+Para generar la app después de un cambio (necesitas Node 22):
+
+```
+cd fuente
+npm install
+npm run build
+```
+
+La versión se toma de `versionName` en `app/build.gradle`. Después corre las pruebas (`cd tests && npm test`) antes de subir.

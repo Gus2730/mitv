@@ -1,0 +1,25 @@
+// Pruebas: agregar listas IPTV en el navegador
+const {chromium}=require('playwright');const {install,B}=require('./mocks');
+const ok=(c,m)=>console.log((c?'✅':'❌')+' '+m);
+(async()=>{const b=await chromium.launch();const errs=[];const p=await (await b.newContext({viewport:{width:1280,height:800}})).newPage();p.on('pageerror',e=>errs.push(e.message));await install(p);
+const m3u='#EXTM3U\n#EXTINF:-1,Canal A\n'+B+'clip.mp4\n#EXTINF:-1,Canal B\n'+B+'clip.mp4?b\n';
+await p.route('https://lista-ok.test/l.m3u',r=>r.fulfill({status:200,body:m3u,headers:{'access-control-allow-origin':'*'}}));
+await p.route('https://lista-404.test/l.m3u',r=>r.fulfill({status:404,body:'no',headers:{'access-control-allow-origin':'*'}}));
+await p.route('https://pagina.test/l.m3u',r=>r.fulfill({status:200,body:'<html><body>Hola\nMundo</body></html>',headers:{'access-control-allow-origin':'*'}}));
+await p.goto(B+'MiTV.html#no-resume');await p.waitForTimeout(1200);
+const toastTxt=()=>p.evaluate(()=>[...document.querySelectorAll('.toast')].map(t=>t.textContent).pop()||'');
+const add=async u=>{await p.$eval('[data-tab=ajustes]',e=>e.click());await p.waitForTimeout(500);await p.fill('#lName','Prueba');await p.fill('#lUrl',u);await p.click('#fUrl button');await p.waitForTimeout(1500);};
+await add('https://lista-ok.test/l.m3u');ok(/2 canales/.test(await toastTxt()),'Lista con permiso se agrega: '+await toastTxt());
+await add('https://lista-404.test/l.m3u');ok(/código 404/.test(await toastTxt()),'404 explicado: '+await toastTxt());
+await add('https://pagina.test/l.m3u');ok(/no es una lista M3U/.test(await toastTxt()),'Página web detectada');
+await add('http://127.0.0.1:8770/l.m3u');
+ok(await p.isVisible('#lfS'),'Sin permiso CORS: aparece la ayuda con opciones');
+ok(/no permite que páginas web la lean/.test(await p.textContent('.modal')),'Explica la causa en español');
+await p.screenshot({path:'vlist_modal.png'});
+await p.click('#lfS');await p.waitForTimeout(500);
+ok(await p.evaluate(()=>JSON.parse(localStorage['mitv:lists']).length)===2,'"Guardar igual" la guarda');
+await p.$eval('[data-tab=vivo]',e=>e.click());await p.waitForTimeout(800);
+await p.click('#side [data-list]:last-child');await p.waitForTimeout(1500);
+ok(/No se pudo abrir la lista/.test(await p.textContent('#content'))&&await p.isVisible('#upL'),'Al abrirla en la web explica y ofrece subir el archivo');
+await p.screenshot({path:'vlist_vivo.png'});
+ok(!errs.length,'Errores JS: '+(errs.join(' | ')||'ninguno'));await b.close();})();

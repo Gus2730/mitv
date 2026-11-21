@@ -1,0 +1,17 @@
+const {chromium}=require('playwright');const {install,B}=require('./mocks');
+const UA='Mozilla/5.0 (Linux; Android 9; AFTKA Build/PS7633) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0 Mobile Safari/537.36';
+const src=require('fs').readFileSync('audit.js','utf8');const bfsSrc=src.slice(src.indexOf('async function bfs'),src.indexOf('(async()=>{'));eval(bfsSrc);
+(async()=>{const b=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});const p=await (await b.newContext({viewport:{width:960,height:540},userAgent:UA})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));await install(p);
+await p.goto(B+'MiTV.html#no-resume');await p.waitForTimeout(2500);
+const go=async t=>{await p.evaluate(t=>document.querySelector(`#tabs [data-tab=${t}]`).focus(),t);await p.keyboard.press('Enter');await p.waitForTimeout(1500);};
+await go('ajustes');await p.evaluate(()=>document.querySelector('#pinSet').focus());await p.keyboard.press('Enter');await p.waitForTimeout(300);await bfs(p,'Ventana Crear PIN');
+await p.evaluate(()=>document.querySelector('#np').focus());await p.keyboard.type('1234');await p.evaluate(()=>document.querySelector('#npOk').focus());await p.keyboard.press('Enter');await p.waitForTimeout(400);
+await go('multi');await p.evaluate(()=>document.querySelector('[data-pick="0"]').focus());await p.keyboard.press('Enter');await p.waitForTimeout(1200);await bfs(p,'Multivista: elegir canal');
+await p.evaluate(()=>document.querySelector('#pkList [data-i="0"]').focus());await p.keyboard.press('Enter');await p.waitForTimeout(1500);await bfs(p,'Multivista con un canal');
+await go('vivo');await p.evaluate(()=>document.querySelector('[data-act=diag]').focus());await p.keyboard.press('Enter');await p.waitForTimeout(6000);await bfs(p,'Ventana Diagnóstico');await p.keyboard.press('Escape');
+await go('ajustes');await p.evaluate(()=>document.querySelector('#lockCats input').focus());const lk=await p.evaluate(()=>document.activeElement.checked);await p.keyboard.press('Enter');await p.waitForTimeout(300);
+const lk2=await p.evaluate(()=>document.querySelector('#lockCats input').checked);
+console.log((lk!==lk2?'✅':'❌')+' OK marca una categoría bloqueada: '+lk+'→'+lk2);
+await go('multi');await p.evaluate(()=>document.querySelector('.lbl [data-sel="0"]').focus());await p.keyboard.press('Enter');await p.waitForTimeout(300);
+console.log((await p.evaluate(()=>document.querySelector('.lbl [data-sel="0"]').textContent.includes('Sonando'))?'✅':'❌')+' Multivista: botón Escuchar con OK');
+console.log('Errores JS:',errs.length?errs:'ninguno');await b.close();})();

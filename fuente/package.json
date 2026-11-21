@@ -1,0 +1,12 @@
+{
+  "name": "mitv-fuente",
+  "private": true,
+  "description": "Código fuente de la app MiTV. `npm run build` genera la app para Android y para la página.",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "esbuild": "0.24.2",
+    "hls.js": "1.7.4"
+  }
+}
