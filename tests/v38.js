@@ -105,7 +105,7 @@ ok(await a.evaluate(()=>[...document.querySelectorAll('#g .card')].indexOf(docum
 await a.keyboard.press('Escape');await a.waitForTimeout(800);
 ok(await a.evaluate(()=>document.querySelector('#tabs .active').dataset.tab)==='inicio','Atrás desde una sección lleva a Inicio');
 const r1=await a.evaluate(()=>window.mitvBack());await a.waitForTimeout(200);
-ok(r1===true&&/Salir de MiTV/.test(await a.textContent('.modal')),'Atrás en Inicio pregunta antes de salir');
+ok(r1===true&&/Salir de GustiTV/.test(await a.textContent('.modal')),'Atrás en Inicio pregunta antes de salir');
 ok(await a.evaluate(()=>document.activeElement.id)==='exNo','“Quedarme” está seleccionado por defecto');
 await a.keyboard.press('Enter');await a.waitForTimeout(200);
 ok(!(await a.isVisible('.modal'))&&await a.evaluate(()=>window.__exit)===0,'Quedarme no cierra la app');

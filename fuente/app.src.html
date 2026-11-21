@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b0f17">
-<title>MiTV</title>
+<title>GustiTV</title>
 <style>
 :root{
   --bg:#0b0f17; --panel:#121826; --panel2:#182033; --line:#243049;
@@ -184,7 +184,7 @@ html.tv select{min-height:40px}
 html.tv .dot.ok{box-shadow:none}
 html.tv #video:focus{outline:none}
 html.tv .spinner{animation-duration:1.4s}
-/* MiTV 3.5 */
+/* GustiTV 3.5 */
 #netBar{display:none;padding:9px 18px;background:#5a3a00;color:#ffe2a8;font-size:14px}
 #netBar.show{display:block}
 #bgArt{position:fixed;inset:0;z-index:-1;background-size:40%;background-position:85% 15%;background-repeat:no-repeat;filter:blur(60px) saturate(1.4);opacity:0;transition:opacity .6s;pointer-events:none}
@@ -232,7 +232,7 @@ html.tv .grid.rowg{grid-auto-columns:200px}
 .sv-logo{margin-top:22px;font-weight:800;font-size:18px;opacity:.6}
 .sv-logo span{color:#2fd18b}
 pre.report{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:11px;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow:auto}
-/* MiTV 3 */
+/* GustiTV 3 */
 .iconbtn{background:var(--panel);border:1px solid var(--line);border-radius:50%;width:38px;height:38px;font-size:17px;flex:none}
 .iconbtn.listening{background:var(--err);border-color:var(--err);animation:pulse 1s infinite}
 @keyframes pulse{50%{transform:scale(1.1)}}
@@ -321,7 +321,7 @@ button.prog:hover,button.prog:focus-visible{border-color:var(--accent)}
   .detail{flex-direction:column}
   .mv.l2{grid-template-columns:1fr;aspect-ratio:9/10}
 }
-/* MiTV 3.8: lista con categorías, fallas, sugerencias, modo noche, guía y menú lateral en TV */
+/* GustiTV 3.8: lista con categorías, fallas, sugerencias, modo noche, guía y menú lateral en TV */
 .chl-cats{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;border-bottom:1px solid #243049;flex:none;scrollbar-width:none}
 .chl-cats .chip{flex:none}
 .chl-row{display:flex;align-items:center;gap:4px}
@@ -348,7 +348,8 @@ html.sidenav{scroll-padding-top:16px}
 html.sidenav body{padding-left:84px}
 html.sidenav header{position:fixed;left:0;top:0;bottom:0;width:84px;flex-direction:column;align-items:stretch;flex-wrap:nowrap;padding:16px 10px;gap:8px;border-bottom:0;border-right:1px solid var(--line);z-index:30;overflow:hidden auto;box-sizing:border-box}
 html.sidenav:not(.mouse) header:has(:focus-visible){width:260px;box-shadow:16px 0 40px #000a}
-html.sidenav header .logo{font-size:20px;white-space:nowrap;padding:0 8px 10px}
+html.sidenav header .logo{font-size:14px;letter-spacing:-.3px;white-space:nowrap;padding:4px 0 12px;text-align:center;transition:font-size .2s}
+html.sidenav:not(.mouse) header:has(:focus-visible) .logo{font-size:22px;text-align:left;padding:0 8px 10px}
 html.sidenav nav{flex-direction:column;flex-wrap:nowrap;gap:4px}
 html.sidenav nav button{display:flex;align-items:center;gap:14px;padding:10px 14px;font-size:0;white-space:nowrap;border-radius:12px;text-align:left;min-height:48px}
 html.sidenav nav button::before{content:attr(data-ico);font-size:24px;width:32px;text-align:center;flex:none}
@@ -359,7 +360,7 @@ html.sidenav #qSug{width:240px}
 html.sidenav .iconbtn,html.sidenav .avatar{align-self:flex-start;margin-left:8px}
 html.sidenav main{min-height:100vh}
 html.sidenav aside{top:0;max-height:100vh}
-/* MiTV 3.9: aspecto premium */
+/* GustiTV 3.9: aspecto premium */
 [data-theme=oled]{--bg:#000;--panel:#0b0b0d;--panel2:#16161a;--line:#26262c;--thumb1:#141418;--thumb2:#050506;--ini:#6b7280}
 [data-theme=oceano]{--bg:#04141c;--panel:#082431;--panel2:#0d3345;--line:#174a60;--accent:#22d3ee;--accent2:#0eb4d0;--onaccent:#03161c;--thumb1:#0d3345;--thumb2:#061c27;--ini:#4a8aa3}
 [data-theme=atardecer]{--bg:#160b1e;--panel:#21102c;--panel2:#2e1740;--line:#4a2a63;--accent:#ff8a4c;--accent2:#e8702f;--onaccent:#1a0a00;--thumb1:#2e1740;--thumb2:#190c24;--ini:#9a6bb8}
@@ -429,7 +430,7 @@ html.tv #osd{bottom:190px}
 .sumtop{display:flex;align-items:center;gap:10px;margin:6px 0}
 .sumtop .hbar{flex:1}
 .sumtop small{width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* MiTV 3.10: celular con barra inferior, encabezado en una fila, bienvenida y texto grande */
+/* GustiTV 3.10: celular con barra inferior, encabezado en una fila, bienvenida y texto grande */
 #tabs .ti,#moreTab,#qBtn{display:none}
 @media (min-width:761px){
   html:not(.tv):not(.sidenav) header{flex-wrap:nowrap}
@@ -470,7 +471,7 @@ a.btn{text-decoration:none}
 .wlch.on::after{content:'✓';position:absolute;top:6px;right:8px;background:var(--accent);color:#04120b;font-weight:900;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;font-size:13px}
 html.txt-l body{zoom:1.12}
 html.txt-xl body{zoom:1.28}
-/* MiTV 3.13: portada destacada, logos uniformes, marcador en vivo y radio */
+/* GustiTV 3.13: portada destacada, logos uniformes, marcador en vivo y radio */
 .hero2{position:relative;display:flex;align-items:center;gap:26px;width:100%;min-height:190px;margin:8px 0 6px;padding:24px 28px;border-radius:20px;border:1px solid var(--line);overflow:hidden;text-align:left;color:#fff;background:#0b0f1a;isolation:isolate}
 .hero2:hover,.hero2:focus-visible{border-color:var(--accent)}
 .hslide{display:contents}
@@ -541,7 +542,7 @@ html.tv .hero2:focus{outline:4px solid var(--accent);outline-offset:3px}
 html.tv #pAudio .aart{width:300px;height:300px}
 html.tv #pAudio .abg img,html.tv .hbg .hblur{display:none}
 @media (prefers-reduced-motion:reduce){.hslide.hin>*,#pAudio.playing .eq i,.matchcard.live .live,.match.live .live,.alive{animation:none}}
-/* MiTV 3.14: Continuar viendo */
+/* GustiTV 3.14: Continuar viendo */
 .grid.editing .card{animation:wiggle .35s ease-in-out infinite alternate;border-color:#e5484d88}
 .grid.editing .card::after{content:'✕';position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:#e5484d;color:#fff;font-weight:900;display:grid;place-items:center;box-shadow:0 4px 12px #0008;z-index:3}
 @keyframes wiggle{from{transform:rotate(-.6deg)}to{transform:rotate(.6deg)}}
@@ -551,7 +552,7 @@ html.tv #pAudio .abg img,html.tv .hbg .hblur{display:none}
 </head>
 <body>
 <header>
-  <div class="logo">Mi<span>TV</span></div>
+  <div class="logo">Gusti<span>TV</span></div>
   <nav id="tabs">
     <button data-tab="inicio">Inicio</button>
     <button data-tab="vivo">En vivo</button>
@@ -607,7 +608,7 @@ html.tv #pAudio .abg img,html.tv .hbg .hblur{display:none}
 <div id="zap"></div>
 <div id="dim" title="Toca para encender"></div>
 <div id="saver"></div>
-<div id="splash"><svg viewBox="0 0 120 120" width="96" height="96" aria-hidden="true"><rect x="14" y="26" width="92" height="62" rx="12" fill="none" stroke="#2fd18b" stroke-width="7"/><path d="M50 43 L76 57 L50 71 Z" fill="#2fd18b"/><path d="M42 100 h36" stroke="#2fd18b" stroke-width="6" stroke-linecap="round"/></svg><div class="logo">Mi<span>TV</span></div></div>
+<div id="splash"><svg viewBox="0 0 120 120" width="96" height="96" aria-hidden="true"><rect x="14" y="26" width="92" height="62" rx="12" fill="none" stroke="#2fd18b" stroke-width="7"/><path d="M50 43 L76 57 L50 71 Z" fill="#2fd18b"/><path d="M42 100 h36" stroke="#2fd18b" stroke-width="6" stroke-linecap="round"/></svg><div class="logo">Gusti<span>TV</span></div></div>
 <div class="toast" id="toast"></div>
 <input type="file" id="fileMovies" accept="video/*,.mkv,.avi,.mov,.m4v,.webm" multiple hidden>
 <input type="file" id="fileFolder" webkitdirectory multiple hidden>
@@ -952,7 +953,7 @@ const WHY = {
   denied: 'El servidor rechaza la conexión (bloqueo por país o enlace vencido)',
   segment: 'La lista responde pero el video no carga (bloqueo o enlace vencido)',
   cors: 'El navegador lo bloquea; funciona en la app Android o con VLC',
-  mixed: 'Usa conexión no segura (http); funciona en la app Android o en el archivo MiTV.html',
+  mixed: 'Usa conexión no segura (http); funciona en la app Android o en el archivo GustiTV.html',
   headers: 'Necesita datos especiales de conexión; funciona en la app Android o con VLC',
   timeout: 'Tarda demasiado en responder'
 };
@@ -1080,7 +1081,7 @@ async function tmdbLookup(it){
    Jellyfin
    ===================================================================== */
 const devId = store.get('dev', null) || (() => { const d = 'mitv-' + Math.random().toString(36).slice(2, 10); store.set('dev', d); return d; })();
-const jfAuthHeader = token => `MediaBrowser Client="MiTV", Device="MiTV", DeviceId="${devId}", Version="2.0"${token ? `, Token="${token}"` : ''}`;
+const jfAuthHeader = token => `MediaBrowser Client="GustiTV", Device="GustiTV", DeviceId="${devId}", Version="2.0"${token ? `, Token="${token}"` : ''}`;
 async function jfLogin(server, user, pass){
   server = server.replace(/\/+$/, '');
   const res = await fetch(server + '/Users/AuthenticateByName', {
@@ -1195,7 +1196,7 @@ async function withLoading(target, fn){
     }
     target.innerHTML = `<div class="empty"><b style="color:var(--text)">No se pudo cargar</b> (${esc(err.message)}).<br><br>
       • Revisa tu conexión a internet.<br>
-      • Si estás viendo la app dentro de la vista previa del chat, esa vista bloquea internet: descarga el archivo MiTV.html y ábrelo con Chrome o Edge.<br>
+      • Si estás viendo la app dentro de la vista previa del chat, esa vista bloquea internet: descarga el archivo GustiTV.html y ábrelo con Chrome o Edge.<br>
       • Si usas un bloqueador de anuncios o antivirus con filtro web, prueba desactivarlo para este archivo.
       <div style="margin-top:12px"><button class="btn ghost" id="retry">Reintentar</button></div></div>`;
     const r = target.querySelector('#retry'); if (r) r.onclick = () => render();

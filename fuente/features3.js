@@ -1,7 +1,7 @@
 /* =====================================================================
-   MiTV 3 · Versión, actualizaciones y pantalla de carga
+   GustiTV 3 · Versión, actualizaciones y pantalla de carga
    ===================================================================== */
-const APP_VERSION = '3.15';
+const APP_VERSION = '3.16';
 const BUILT_HOME = '__MITV_HOME__';
 function homeUrl(){
   if (S.cfg.homeUrl) return S.cfg.homeUrl.replace(/\/?$/, '/');
@@ -25,8 +25,8 @@ async function checkUpdates(manual){
 }
 function showUpdate(v, home){
   const bar = $('#updBar');
-  const apk = v.apk ? new URL(v.apk, home).href : home + 'MiTV.apk';
-  bar.innerHTML = `<span>Hay una versión nueva de MiTV (${esc(v.version)}).</span>` +
+  const apk = v.apk ? new URL(v.apk, home).href : home + 'GustiTV.apk';
+  bar.innerHTML = `<span>Hay una versión nueva de GustiTV (${esc(v.version)}).</span>` +
     (android ? `<button class="btn small" id="updGo">Actualizar ahora</button>`
       : navigator.serviceWorker && navigator.serviceWorker.controller ? `<button class="btn small" id="updGo">Actualizar ahora</button>`
       : `<a class="btn small" href="${esc(home)}" target="_blank" rel="noopener">Ver novedades</a>`) +
@@ -515,7 +515,7 @@ function checkRecordings(){
 }
 function renderRecBox(){
   const box = $('#recBox'); if (!box) return;
-  if (!canRecord()){ box.innerHTML = '<p class="muted" style="margin:0">Las grabaciones están disponibles en la versión para computadora (archivo MiTV.html en Chrome o Edge).</p>'; return; }
+  if (!canRecord()){ box.innerHTML = '<p class="muted" style="margin:0">Las grabaciones están disponibles en la versión para computadora (archivo GustiTV.html en Chrome o Edge).</p>'; return; }
   const fmtB = b => b > 1e9 ? (b/1e9).toFixed(2) + ' GB' : Math.round(b/1e6) + ' MB';
   box.innerHTML = `<p class="muted" style="margin-top:0">Graba canales en vivo (formato HLS) a un archivo que puedes ver con VLC. La app debe quedar abierta mientras graba.${window.showSaveFilePicker ? '' : ' Tu navegador guardará el archivo al terminar.'}</p>
     <form id="fRec" class="row">
@@ -1143,7 +1143,7 @@ async function runDiagnosis(list){
   if (stop) return;
   store.set('health', S.health);
   const btn = md.querySelector('#dgCopy'); btn.disabled = false;
-  const report = `Diagnóstico MiTV ${APP_VERSION} · ${deviceName()} · ${new Date().toLocaleString('es-CR')}\n` +
+  const report = `Diagnóstico GustiTV ${APP_VERSION} · ${deviceName()} · ${new Date().toLocaleString('es-CR')}\n` +
     items.map((it, i) => `${res[i].why === 'ok' ? 'OK ' : 'XX '} ${it.name} | ${res[i].why}${res[i].code ? ' ' + res[i].code : ''}${res[i].alt ? ' (enlace alterno)' : ''} | ${res[i].alt || it.url}`).join('\n');
   btn.onclick = async () => {
     try { await navigator.clipboard.writeText(report); toast('Informe copiado'); }
@@ -1203,7 +1203,7 @@ function ajustesExtra(target){
   </div>
 
   <div class="box"><h3>Versión y actualizaciones</h3>
-    <p style="margin-top:0">MiTV ${APP_VERSION}${android ? ' para Android' : ''}.</p>
+    <p style="margin-top:0">GustiTV ${APP_VERSION}${android ? ' para Android' : ''}.</p>
     <form id="fHome" class="row"><div class="field"><label>Dirección de tu página publicada (para buscar actualizaciones)</label><input id="homeIn" type="url" placeholder="https://tu-usuario.github.io/mitv/" value="${esc(S.cfg.homeUrl || homeUrl())}"></div><button class="btn ghost">Guardar</button></form>
     <button class="btn" id="updChk">Buscar actualizaciones</button>
   </div>`;

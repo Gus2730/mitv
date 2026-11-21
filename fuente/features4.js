@@ -1,5 +1,5 @@
 /* =====================================================================
-   MiTV 3.5 · Informe de errores y rendimiento
+   GustiTV 3.5 · Informe de errores y rendimiento
    ===================================================================== */
 const LOG_MAX = 80;
 const T0 = performance.now();
@@ -24,7 +24,7 @@ function supportReport(){
   const log = store.get('log', []);
   const ch = Object.values(S.health);
   return [
-    `MiTV ${APP_VERSION} · ${deviceName()} · ${IS_TV ? 'modo TV' : 'normal'}${android ? ' · app Android' : ''}`,
+    `GustiTV ${APP_VERSION} · ${deviceName()} · ${IS_TV ? 'modo TV' : 'normal'}${android ? ' · app Android' : ''}`,
     `Fecha: ${new Date().toLocaleString('es-CR')}`,
     `Pantalla: ${innerWidth}×${innerHeight} · ${navigator.userAgent}`,
     `Arranque: ${perf.start ? Math.round(perf.start) + ' ms' : '—'} · Flechazo promedio: ${nav} ms (máx ${navMax} ms) · Memoria: ${mem}`,
@@ -176,7 +176,7 @@ function showSaver(){
     s.innerHTML = `<div class="sv-box" style="left:${10 + Math.random() * 45}%;top:${10 + Math.random() * 45}%">
       <div class="sv-time">${d.toLocaleTimeString('es-CR', { hour: 'numeric', minute: '2-digit' })}</div>
       <div class="sv-date">${d.toLocaleDateString('es-CR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>${wx}
-      <div class="sv-logo">Mi<span>TV</span></div></div>`;
+      <div class="sv-logo">Gusti<span>TV</span></div></div>`;
   };
   draw();
   clearInterval(saverTimer); saverTimer = setInterval(draw, 30000);
@@ -248,7 +248,7 @@ function ajustesExtra4(target){
   target.innerHTML = `
   ${android && android.playNative ? `<div class="box"><h3>Reproductor de Android</h3>
     <label class="switch"><input type="checkbox" id="natP" ${S.cfg.nativePlayer !== false ? 'checked' : ''}> Usar el reproductor nativo de Android para canales en vivo (más fluido, recomendado en TV)</label>
-    <p class="muted" style="margin:0;font-size:13px">En el reproductor nativo: ▲▼ cambian de canal, ◀▶ atrasan o adelantan, OK o Menú abren la lista de canales (◀▶ cambian de categoría, mantener OK marca favorito), el botón Último vuelve al canal anterior, los números cambian de canal y Atrás vuelve a MiTV. En el teléfono: toca la pantalla para ver los botones, desliza arriba o abajo en el centro para cambiar de canal, en el borde izquierdo para el brillo y en el derecho para el volumen, doble toque para atrasar o adelantar y desliza a la izquierda para abrir la lista. Al salir de la app, el canal sigue en una ventana flotante.</p></div>` : ''}
+    <p class="muted" style="margin:0;font-size:13px">En el reproductor nativo: ▲▼ cambian de canal, ◀▶ atrasan o adelantan, OK o Menú abren la lista de canales (◀▶ cambian de categoría, mantener OK marca favorito), el botón Último vuelve al canal anterior, los números cambian de canal y Atrás vuelve a GustiTV. En el teléfono: toca la pantalla para ver los botones, desliza arriba o abajo en el centro para cambiar de canal, en el borde izquierdo para el brillo y en el derecho para el volumen, doble toque para atrasar o adelantar y desliza a la izquierda para abrir la lista. Al salir de la app, el canal sigue en una ventana flotante.</p></div>` : ''}
   <div class="box"><h3>Clima y protector de pantalla</h3>
     <div class="row"><div class="field" style="max-width:240px"><label>Ciudad</label><select id="cityS">${CITIES.map(c => `<option ${c[0] === city()[0] ? 'selected' : ''}>${esc(c[0])}</option>`).join('')}</select></div>
     <div class="field" style="max-width:240px"><label>Protector de pantalla</label><select id="saverS">${[['0', 'Apagado'], ['2', 'A los 2 minutos'], ['5', 'A los 5 minutos'], ['10', 'A los 10 minutos'], ['15', 'A los 15 minutos']].map(([v, n]) => `<option value="${v}" ${String(S.cfg.saverMin) === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div></div>

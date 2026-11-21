@@ -1,5 +1,5 @@
 /* =====================================================================
-   MiTV 3.13 · Mejoras visuales: portada destacada, marcador en vivo y radio
+   GustiTV 3.13 · Mejoras visuales: portada destacada, marcador en vivo y radio
    ===================================================================== */
 
 /* ---------- Portada destacada en Inicio (carrusel) ---------- */

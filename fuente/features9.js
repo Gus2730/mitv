@@ -1,5 +1,5 @@
 /* =====================================================================
-   MiTV 3.14 · Continuar viendo: primero en Inicio, cuánto falta y editar
+   GustiTV 3.14 · Continuar viendo: primero en Inicio, cuánto falta y editar
    ===================================================================== */
 function leftText(pr){
   if (!pr || !pr.d) return '';

@@ -53,7 +53,7 @@ import java.util.Map;
 import java.util.TreeSet;
 
 /**
- * Reproductor nativo de MiTV para canales en vivo.
+ * Reproductor nativo de GustiTV para canales en vivo.
  * Control remoto: ▲▼ canal, ◀▶ atrasar/adelantar, OK lista de canales (mantener OK = favorito),
  * Menú lista, Info banner, números para ir a un canal, "Último" canal anterior, Atrás para volver.
  * En la lista: ◀▶ cambian de categoría, mantener OK marca favorito, Atrás la cierra.

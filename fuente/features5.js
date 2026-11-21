@@ -1,5 +1,5 @@
 /* =====================================================================
-   MiTV 3.8 · Navegación y experiencia de uso
+   GustiTV 3.8 · Navegación y experiencia de uso
    ===================================================================== */
 
 /* ---------- Favoritos desde cualquier lugar ---------- */
@@ -162,7 +162,7 @@ function backToHome(){
   if (S.q){ S.q = ''; $('#q').value = ''; hideSug(); render(); return true; }
   if (!android) return false;
   if (S.tab !== 'inicio'){ S.tab = 'inicio'; render(); window.scrollTo(0, 0); setTimeout(() => $('#tabs .active')?.focus({ preventScroll: true }), 60); return true; }
-  const md = openModal(`<h3>¿Salir de MiTV?</h3><p class="muted">Puedes volver cuando quieras; tus favoritos y tu último canal quedan guardados.</p>
+  const md = openModal(`<h3>¿Salir de GustiTV?</h3><p class="muted">Puedes volver cuando quieras; tus favoritos y tu último canal quedan guardados.</p>
     <div class="actions"><button class="btn ghost" id="exNo" autofocus>Quedarme</button><button class="btn" id="exYes">Salir</button></div>`);
   md.querySelector('#exNo').onclick = () => closeModal();
   md.querySelector('#exYes').onclick = () => { closeModal(); if (android.exitApp) android.exitApp(); };
@@ -216,7 +216,7 @@ function applyNight(){
 }
 function setSleep(min){
   S.sleepAt = min ? Date.now() + min * 60e3 : 0;
-  toast(min ? `🌙 MiTV se apagará en ${min} minutos` : 'Apagado automático cancelado');
+  toast(min ? `🌙 GustiTV se apagará en ${min} minutos` : 'Apagado automático cancelado');
   updateSleepLabel();
 }
 function updateSleepLabel(){
@@ -240,15 +240,15 @@ function checkSleep(){ if (S.sleepAt && Date.now() >= S.sleepAt) sleepNow(); app
 function showGuide(){
   const touch = !IS_TV && matchMedia('(hover: none)').matches;
   const pages = IS_TV ? [
-    ['📺 Bienvenido a MiTV', 'Usa las flechas del control para moverte y OK para elegir. El menú de secciones está a la izquierda.'],
+    ['📺 Bienvenido a GustiTV', 'Usa las flechas del control para moverte y OK para elegir. El menú de secciones está a la izquierda.'],
     ['🎛️ Viendo un canal', '▲ ▼ cambian de canal · ◀ ▶ atrasan o adelantan · OK abre la lista de canales (mantén OK para marcar favorito) · los números van directo a un canal.'],
     ['↩️ Volver', 'Atrás cierra la lista, luego el video, luego te lleva a Inicio. Desde Inicio te pregunta antes de salir de la app.']
   ] : touch ? [
-    ['📺 Bienvenido a MiTV', 'Toca un canal para verlo. Tus favoritos y lo último que viste aparecen en Inicio.'],
+    ['📺 Bienvenido a GustiTV', 'Toca un canal para verlo. Tus favoritos y lo último que viste aparecen en Inicio.'],
     ['👆 Gestos en el video', 'Toca para ver los botones · desliza arriba o abajo para cambiar de canal · doble toque a un lado para atrasar o adelantar 10 s · en la app de Android, desliza en el borde izquierdo para el brillo y en el derecho para el volumen.'],
     ['☰ Lista de canales', 'Con el botón Canales ves todos los canales por categoría, qué están dando y qué sigue. Toca ☆ para marcarlo como favorito.']
   ] : [
-    ['📺 Bienvenido a MiTV', 'Haz clic en un canal para verlo. Escribe en el buscador para ver sugerencias al instante.'],
+    ['📺 Bienvenido a GustiTV', 'Haz clic en un canal para verlo. Escribe en el buscador para ver sugerencias al instante.'],
     ['⌨️ Atajos', '↑ ↓ cambian de canal · ← → atrasan o adelantan · L vuelve al canal anterior · números van directo a un canal · Esc cierra.'],
     ['☰ Lista de canales', 'En el reproductor, “Canales” muestra la lista por categoría con lo que están dando ahora y lo que sigue.']
   ];
@@ -284,7 +284,7 @@ function ajustesExtra5(target){
     <div class="row"><div class="field" style="max-width:260px"><label>Modo noche</label><select id="nightS">${[['off', 'Apagado'], ['on', 'Siempre'], ['auto', 'Automático de 8 p. m. a 6 a. m.']].map(([v, n]) => `<option value="${v}" ${(S.cfg.night || 'off') === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
     <div class="field" style="max-width:260px"><label>Apagado automático</label><select id="sleepS"><option value="">Elegir…</option>${[15, 30, 60, 90, 120].map(m => `<option value="${m}">En ${m} minutos</option>`).join('')}<option value="0">Cancelar</option></select></div></div>
     <p class="muted" style="margin:0 0 10px;font-size:13px">Modo noche baja el brillo de los menús. Apagado automático: <b id="sleepStat"></b>. También lo encuentras en el reproductor, en “Más ⋯”.</p>
-    <button class="btn ghost" id="guideBtn">❓ ¿Cómo se usa MiTV?</button></div>`;
+    <button class="btn ghost" id="guideBtn">❓ ¿Cómo se usa GustiTV?</button></div>`;
   const sn = $('#sideNv'); if (sn) sn.onchange = e => { S.cfg.sideNav = e.target.checked; saveCfg(); applySideNav(); };
   $('#autoSk').onchange = e => { S.cfg.autoSkip = e.target.checked; saveCfg(); };
   $('#nightS').onchange = e => { S.cfg.night = e.target.value; saveCfg(); applyNight(); };

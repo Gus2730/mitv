@@ -46,7 +46,7 @@ await p.selectOption('#fxS','full');
 // Resumen mensual
 await p.click('#sumBtn');await p.waitForTimeout(300);
 const sum=await p.textContent('.modal');
-ok(/Tu resumen MiTV/.test(sum)&&/Canal Uno/.test(sum)&&/2 días seguidos|3 días seguidos/.test(sum)||/seguidos/.test(sum),'Resumen: '+sum.replace(/\s+/g,' ').slice(0,150));
+ok(/Tu resumen GustiTV/.test(sum)&&/Canal Uno/.test(sum)&&/2 días seguidos|3 días seguidos/.test(sum)||/seguidos/.test(sum),'Resumen: '+sum.replace(/\s+/g,' ').slice(0,150));
 ok(/1 h 55 min|1 h 50 min|1 h 45 min|1 h 5\d min|2 h/.test(sum)||/vistos este mes/.test(sum),'Resumen muestra el tiempo del mes');
 await p.screenshot({path:'v39_resumen.png'});
 await p.click('#sumNo');

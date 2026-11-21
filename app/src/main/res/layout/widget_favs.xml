@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="6dp"
-        android:text="MiTV · Favoritos"
+        android:text="GustiTV · Favoritos"
         android:textColor="#2FD18B"
         android:textSize="15sp"
         android:textStyle="bold" />

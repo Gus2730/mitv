@@ -1,5 +1,5 @@
 /* =====================================================================
-   MiTV 3.10 · Revisión: celular, Guía, Inicio, bienvenida, texto grande
+   GustiTV 3.10 · Revisión: celular, Guía, Inicio, bienvenida, texto grande
    ===================================================================== */
 
 /* ---------- Celular: barra de pestañas abajo + "Más" + buscador tras lupa ---------- */
@@ -94,7 +94,7 @@ async function firstRun(){
   const dots = () => `<div class="gdots">${[0, 1, 2].map(i => `<i class="${i === step ? 'on' : ''}"></i>`).join('')}</div>`;
   const draw = async () => {
     if (step === 0){
-      box.innerHTML = `<h3>👋 Bienvenido a MiTV</h3><p class="sub">¿De qué país quieres ver canales primero? Lo puedes cambiar cuando quieras.</p>
+      box.innerHTML = `<h3>👋 Bienvenido a GustiTV</h3><p class="sub">¿De qué país quieres ver canales primero? Lo puedes cambiar cuando quieras.</p>
         <div class="wlc">${COUNTRIES.map(([c, n, f]) => `<button class="chip ${c === cc ? 'active' : ''}" data-c="${c}">${f} ${esc(n)}</button>`).join('')}</div>
         ${dots()}<div class="actions"><button class="btn ghost" id="wlS">Saltar</button><button class="btn" id="wlN">Siguiente</button></div>`;
       box.querySelector('.wlc').onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; cc = b.dataset.c; box.querySelectorAll('.wlc .chip').forEach(x => x.classList.toggle('active', x === b)); };

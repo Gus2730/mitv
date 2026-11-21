@@ -13,7 +13,7 @@ import android.widget.RemoteViews;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** Widget de la pantalla de inicio: hasta 5 canales favoritos que abren MiTV directo en ese canal. */
+/** Widget de la pantalla de inicio: hasta 5 canales favoritos que abren GustiTV directo en ese canal. */
 public class FavsWidget extends AppWidgetProvider {
 
     public static final String PREFS = "mitv_widget";
@@ -44,13 +44,13 @@ public class FavsWidget extends AppWidgetProvider {
             favs = new JSONArray();
         }
         int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
-        // Tocar el título abre MiTV
+        // Tocar el título abre GustiTV
         Intent home = new Intent(ctx, MainActivity.class);
         rv.setOnClickPendingIntent(R.id.wTitle, PendingIntent.getActivity(ctx, 90, home, flags));
         for (int i = 0; i < SLOTS.length; i++) {
             JSONObject f = favs.optJSONObject(i);
             if (f == null) {
-                rv.setTextViewText(SLOTS[i], i == 0 ? "Marca canales con ★ en MiTV" : "");
+                rv.setTextViewText(SLOTS[i], i == 0 ? "Marca canales con ★ en GustiTV" : "");
                 rv.setViewVisibility(SLOTS[i], i == 0 ? android.view.View.VISIBLE : android.view.View.GONE);
                 continue;
             }

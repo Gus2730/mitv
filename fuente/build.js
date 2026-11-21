@@ -33,5 +33,5 @@ const version = (fs.readFileSync(repo('app', 'build.gradle'), 'utf8').match(/ver
 const pwa = out.replace('<meta name="theme-color" content="#0b0f17">', '<meta name="theme-color" content="#0b0f17">\n<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" href="icons/icon-192.png">\n<link rel="apple-touch-icon" href="icons/icon-192.png">\n<meta name="apple-mobile-web-app-capable" content="yes">');
 fs.writeFileSync(repo('docs', 'app', 'index.html'), pwa);
 fs.writeFileSync(repo('app', 'src', 'main', 'assets', 'index.html'), out);
-fs.writeFileSync(repo('docs', 'version.json'), JSON.stringify({ version, apk: 'MiTV.apk' }) + '\n');
+fs.writeFileSync(repo('docs', 'version.json'), JSON.stringify({ version, apk: 'GustiTV.apk' }) + '\n');
 console.log('copias listas · versión', version);

@@ -204,11 +204,11 @@ public class MainActivity extends Activity {
                 return;
             }
             final File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-            final File apk = new File(dir, "MiTV-update.apk");
+            final File apk = new File(dir, "GustiTV-update.apk");
             if (apk.exists()) apk.delete();
             DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
             DownloadManager.Request r = new DownloadManager.Request(Uri.parse(url))
-                    .setTitle("MiTV")
+                    .setTitle("GustiTV")
                     .setDescription("Descargando la actualización")
                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
                     .setDestinationUri(Uri.fromFile(apk));

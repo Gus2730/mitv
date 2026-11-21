@@ -1,5 +1,5 @@
 /* =====================================================================
-   MiTV 3.9 · Experiencia premium
+   GustiTV 3.9 · Experiencia premium
    ===================================================================== */
 
 /* ---------- Efectos visuales: completos o ligeros (la TV usa ligeros por defecto) ---------- */
@@ -53,7 +53,7 @@ function updBadge(){
 ['playing', 'resize', 'loadedmetadata', 'pause'].forEach(ev => video.addEventListener(ev, updBadge));
 setInterval(updBadge, 3000);
 
-/* ---------- Tu resumen MiTV ---------- */
+/* ---------- Tu resumen GustiTV ---------- */
 function openSummary(){
   const st = P.stats, ym = todayKey().slice(0, 7);
   const monthDays = Object.entries(st.day).filter(([d]) => d.startsWith(ym));
@@ -73,7 +73,7 @@ function openSummary(){
   const topCat = Object.entries(st.cat).sort((a, b) => b[1] - a[1]).slice(0, 4);
   const maxK = Math.max(1, ...topCat.map(c => c[1]));
   const month = new Date().toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
-  const md = openModal(`<h3>📊 Tu resumen MiTV</h3><p class="muted" style="margin-top:0">${esc(profile().name)} · ${esc(month)}</p>
+  const md = openModal(`<h3>📊 Tu resumen GustiTV</h3><p class="muted" style="margin-top:0">${esc(profile().name)} · ${esc(month)}</p>
     ${secs || topCh.length ? `<div class="sumgrid">
       <div class="sumcard"><b>${esc(fmtMins(secs))}</b><span>vistos este mes</span></div>
       <div class="sumcard"><b>${active}</b><span>${active === 1 ? 'día' : 'días'} con TV este mes</span></div>
@@ -146,7 +146,7 @@ async function castScreen(){
   openModal(`<h3>📺 Transmitir a la TV</h3>
     <p>Este navegador no puede enviar este canal directamente a la TV. Dos opciones:</p>
     <p>1. <b>Chrome o Edge:</b> menú ⋮ → <b>Guardar, compartir y transmitir</b> → <b>Transmitir…</b> y elige tu Chromecast o TV.</p>
-    <p>2. <b>Con MiTV en tu TV:</b> inicia sesión con la misma cuenta en los dos aparatos y usa <b>Más ⋯ → Enviar a otro dispositivo</b>.</p>
+    <p>2. <b>Con GustiTV en tu TV:</b> inicia sesión con la misma cuenta en los dos aparatos y usa <b>Más ⋯ → Enviar a otro dispositivo</b>.</p>
     <div class="actions"><button class="btn" id="csNo" autofocus>Entendido</button></div>`).querySelector('#csNo').onclick = () => closeModal();
 }
 
@@ -173,7 +173,7 @@ window.mitvUpdateEvent = function(s){
   const m = {
     download: 'Descargando la actualización… al terminar, Android te pedirá confirmar la instalación.',
     install: 'Descarga lista. Acepta la instalación en la pantalla de Android.',
-    perm: 'Activa “Permitir de esta fuente” para MiTV y vuelve a tocar Actualizar.',
+    perm: 'Activa “Permitir de esta fuente” para GustiTV y vuelve a tocar Actualizar.',
     fail: 'No se pudo instalar automáticamente. Abriendo la descarga…'
   };
   toast(m[s] || s);
@@ -188,8 +188,8 @@ function ajustesExtra6(target){
       <option value="full" ${fxMode() === 'full' ? 'selected' : ''}>Completos (animaciones y atenuado)</option>
       <option value="lite" ${fxMode() === 'lite' ? 'selected' : ''}>Ligeros (recomendado en TV)</option></select></div></div>
     <label class="switch"><input type="checkbox" id="sndS" ${soundsOn() ? 'checked' : ''}> Sonidos suaves al navegar con el control</label>
-    <div class="row" style="margin-top:8px"><button class="btn ghost" id="sumBtn">📊 Tu resumen MiTV</button>
-    ${android && android.setWidgetFavs ? '<span class="muted" style="font-size:13px">Widget: mantén presionada la pantalla de inicio de tu celular → Widgets → MiTV.</span>' : ''}</div></div>`);
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="sumBtn">📊 Tu resumen GustiTV</button>
+    ${android && android.setWidgetFavs ? '<span class="muted" style="font-size:13px">Widget: mantén presionada la pantalla de inicio de tu celular → Widgets → GustiTV.</span>' : ''}</div></div>`);
   $('#fxS').onchange = e => { S.cfg.fx = e.target.value; saveCfg(); applyFx(); };
   $('#sndS').onchange = e => { S.cfg.sounds = e.target.checked; saveCfg(); if (e.target.checked) beep(660, 0.1, 0.05); };
   $('#sumBtn').onclick = openSummary;
