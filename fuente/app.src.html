@@ -411,7 +411,7 @@ html.fxfull .modal{animation:cardIn .25s backwards}
 html.tv .pbar{top:auto;bottom:0;background:linear-gradient(#0000,#000e 60%);padding:34px 40px 30px}
 html.tv .pbar .t{order:-1;flex-basis:100%}
 html.tv .pbar .t b{font-size:26px}
-html.tv .pbar button{padding:12px 20px;font-size:17px;border-radius:14px}
+html.tv .pbar button{padding:12px 18px;font-size:17px;border-radius:14px;white-space:nowrap}
 html.tv #pMenu{top:auto;bottom:130px;right:40px}
 html.tv #osd{bottom:190px}
 /* Agenda deportiva tipo marcador */
@@ -2010,7 +2010,7 @@ async function play(items, index){
 function updateQualLabel(){
   if (!hls) return;
   const lv = hls.levels[hls.currentLevel];
-  $('#pQual').textContent = 'Calidad: ' + (hls.autoLevelEnabled ? 'Auto' : '') + (lv && lv.height ? (hls.autoLevelEnabled ? ' · ' : '') + lv.height + 'p' : '');
+  $('#pQual').textContent = (IS_TV ? '⚙ ' : 'Calidad: ') + (hls.autoLevelEnabled ? 'Auto' : '') + (lv && lv.height ? (hls.autoLevelEnabled ? ' · ' : '') + lv.height + 'p' : '');
 }
 function openMenu(entries){
   pMenu.innerHTML = entries.map((e, i) => `<button data-m="${i}" class="${e.on ? 'on' : ''}">${esc(e.label)}</button>`).join('');

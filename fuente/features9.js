@@ -54,3 +54,7 @@ render = function(){
   if (S.tab === 'inicio') decorateContinue();
   return r;
 };
+
+// En la TV, textos cortos en la barra del reproductor para que quepa en una sola fila
+// aunque la TV use una letra más ancha (si se parte en dos filas, el control se salta botones)
+if (IS_TV){ const pp = $('#pPip'); if (pp){ pp.textContent = '⧉ Flotante'; pp.title = 'Ventana flotante'; } }
